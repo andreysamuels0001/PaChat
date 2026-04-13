@@ -1,0 +1,73 @@
+{
+  "name": "pachat",
+  "version": "1.0.0",
+  "private": true,
+  "description": "PaChat — a premium real-time chat desktop application built with Electron, React, TypeScript and Socket.IO.",
+  "author": {
+    "name": "Andrey Samuels",
+    "email": "andreysamuels@outlook.com",
+    "url": "https://github.com/andreysamuels0001"
+  },
+  "license": "MIT",
+  "homepage": "https://github.com/andreysamuels0001/pachat#readme",
+  "repository": {
+    "type": "git",
+    "url": "git+https://github.com/andreysamuels0001/pachat.git"
+  },
+  "bugs": {
+    "url": "https://github.com/andreysamuels0001/pachat/issues"
+  },
+  "keywords": [
+    "electron",
+    "react",
+    "typescript",
+    "socket.io",
+    "realtime",
+    "chat",
+    "desktop-app",
+    "messaging",
+    "websocket",
+    "tailwindcss"
+  ],
+  "engines": {
+    "node": ">=20.11.0",
+    "npm": ">=10.0.0"
+  },
+  "workspaces": [
+    "packages/*",
+    "apps/*"
+  ],
+  "scripts": {
+    "dev": "concurrently -n server,desktop -c magenta,cyan \"npm:dev:server\" \"npm:dev:desktop\"",
+    "dev:server": "npm run dev --workspace @pachat/server",
+    "dev:desktop": "npm run dev --workspace @pachat/desktop",
+    "build": "npm run build --workspace @pachat/shared && npm run build --workspace @pachat/server && npm run build --workspace @pachat/desktop",
+    "build:shared": "npm run build --workspace @pachat/shared",
+    "package": "npm run build:shared && npm run package --workspace @pachat/desktop",
+    "db:migrate": "npm run db:migrate --workspace @pachat/server",
+    "db:seed": "npm run db:seed --workspace @pachat/server",
+    "db:reset": "npm run db:reset --workspace @pachat/server",
+    "typecheck": "npm run typecheck --workspaces --if-present",
+    "lint": "eslint . --cache",
+    "lint:fix": "eslint . --cache --fix",
+    "format": "prettier --write \"**/*.{ts,tsx,js,json,css,md,yml}\"",
+    "format:check": "prettier --check \"**/*.{ts,tsx,js,json,css,md,yml}\"",
+    "test": "npm run test --workspaces --if-present",
+    "test:e2e": "node scripts/smoke.mjs",
+    "clean": "node scripts/clean.mjs",
+    "setup": "node scripts/setup.mjs"
+  },
+  "devDependencies": {
+    "@eslint/js": "^9.17.0",
+    "@types/node": "^22.10.2",
+    "concurrently": "^9.1.0",
+    "eslint": "^9.17.0",
+    "eslint-config-prettier": "^9.1.0",
+    "eslint-plugin-react": "^7.37.2",
+    "eslint-plugin-react-hooks": "^5.1.0",
+    "globals": "^15.14.0",
+    "prettier": "^3.4.2",
+    "typescript": "^5.7.2",
+    "typescript-eslint": "^8.18.1"
+  }
+}
