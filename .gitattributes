@@ -1,0 +1,39 @@
+# Normalise line endings in the repository to LF, regardless of the platform a
+# contributor works on. Without this, a Windows checkout commits CRLF and every
+# subsequent diff from a macOS or Linux machine touches every line.
+* text=auto eol=lf
+
+# Shell scripts must stay LF even on Windows — CRLF breaks the shebang.
+*.sh      text eol=lf
+*.mjs     text eol=lf
+
+# Windows-only scripts keep CRLF.
+*.bat     text eol=crlf
+*.cmd     text eol=crlf
+*.ps1     text eol=crlf
+
+# Binary assets: never diffed, never converted.
+*.png     binary
+*.jpg     binary
+*.jpeg    binary
+*.gif     binary
+*.webp    binary
+*.ico     binary
+*.icns    binary
+*.woff    binary
+*.woff2   binary
+*.ttf     binary
+*.otf     binary
+*.db      binary
+*.sqlite  binary
+*.sqlite3 binary
+
+# SVG is text, but treating it as such keeps Prettier and diffs sane.
+*.svg     text eol=lf
+
+# Collapse the lockfile in pull-request diffs — it is generated, and reviewing
+# 20k lines of it hides the change that actually matters.
+package-lock.json  -diff linguist-generated=true
+
+# Keep GitHub's language statistics about the application, not its assets.
+docs/assets/*.svg  linguist-documentation=true
