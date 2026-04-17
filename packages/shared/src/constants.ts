@@ -49,3 +49,23 @@ export const TIMINGS = {
   /** Window during which an author may still edit a message. */
   messageEditWindowMs: 24 * 60 * 60 * 1000,
 } as const;
+
+/** Reaction shortcuts surfaced in the hover toolbar, in display order. */
+export const QUICK_REACTIONS = ['👍', '🎉', '🔥', '❤️', '😂', '👀', '🚀', '✅'] as const;
+
+/** Accent colours a member can pick; drives their avatar ring and bubble tint. */
+export const ACCENT_COLORS = [
+  'indigo',
+  'violet',
+  'cyan',
+  'emerald',
+  'amber',
+  'rose',
+  'sky',
+  'fuchsia',
+] as const;
+
+export type AccentColor = (typeof ACCENT_COLORS)[number];
+
+/** Socket.IO namespace used for all chat traffic. */
+export const SOCKET_NAMESPACE = '/chat';
