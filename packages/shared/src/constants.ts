@@ -32,3 +32,20 @@ export const LIMITS = {
   /** Distinct emoji reactions allowed on one message. */
   reactionsPerMessage: 20,
 } as const;
+
+export const TIMINGS = {
+  /** A typing indicator expires this long after the last keystroke event. */
+  typingTtlMs: 5_000,
+  /** Client throttles `typing:start` to at most one per interval. */
+  typingThrottleMs: 2_000,
+  /** Heartbeat used to detect half-open sockets. */
+  heartbeatIntervalMs: 25_000,
+  /** Grace period before a disconnected member is marked offline. */
+  presenceGraceMs: 10_000,
+  /** Access token lifetime. */
+  accessTokenTtlMs: 15 * 60 * 1000,
+  /** Refresh token lifetime. */
+  refreshTokenTtlMs: 30 * 24 * 60 * 60 * 1000,
+  /** Window during which an author may still edit a message. */
+  messageEditWindowMs: 24 * 60 * 60 * 1000,
+} as const;
