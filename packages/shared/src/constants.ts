@@ -69,3 +69,18 @@ export type AccentColor = (typeof ACCENT_COLORS)[number];
 
 /** Socket.IO namespace used for all chat traffic. */
 export const SOCKET_NAMESPACE = '/chat';
+
+/** Canonical error codes. The client maps these to human-readable copy. */
+export const ERROR_CODES = {
+  unauthorized: 'UNAUTHORIZED',
+  forbidden: 'FORBIDDEN',
+  notFound: 'NOT_FOUND',
+  conflict: 'CONFLICT',
+  validation: 'VALIDATION_FAILED',
+  rateLimited: 'RATE_LIMITED',
+  protocolMismatch: 'PROTOCOL_MISMATCH',
+  payloadTooLarge: 'PAYLOAD_TOO_LARGE',
+  internal: 'INTERNAL_ERROR',
+} as const;
+
+export type ErrorCode = (typeof ERROR_CODES)[keyof typeof ERROR_CODES];
