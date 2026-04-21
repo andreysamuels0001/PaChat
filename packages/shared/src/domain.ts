@@ -95,3 +95,33 @@ export const DEFAULT_PREFERENCES: Preferences = {
   compactDensity: false,
   showReadReceipts: true,
 };
+
+/* ──────────────────────────────────────────────────────────────────────────────
+ * Attachments
+ * ────────────────────────────────────────────────────────────────────────────*/
+
+export const attachmentSchema = z.object({
+  id: idSchema,
+  name: z.string().min(1).max(255),
+  mimeType: z.string().min(3).max(127),
+  byteSize: z.number().int().positive().max(LIMITS.attachmentBytes),
+  /** Server-relative download path, e.g. `/files/<id>/<name>`. */
+  url: z.string().min(1),
+  /** Intrinsic dimensions for images, so the client can reserve layout space. */
+  width: z.number().int().positive().nullable(),
+  height: z.number().int().positive().nullable(),
+});
+export type Attachment = z.infer<typeof attachmentSchema>;
+
+/* ──────────────────────────────────────────────────────────────────────────────
+ * Reactions
+ * ────────────────────────────────────────────────────────────────────────────*/
+
+/** Aggregated per emoji so the client never receives one row per reactor. */
+export const reactionSchema = z.object({
+  emoji: z.string().min(1).max(16),
+  count: z.number().int().nonnegative(),
+  /** Ids of reacting members, capped server-side for very large rooms. */
+  userIds: z.array(idSchema),
+});
+export type Reaction = z.infer<typeof reactionSchema>;
