@@ -27,3 +27,20 @@ export const emailSchema = z.string().trim().toLowerCase().email().max(254);
 export const passwordSchema = z.string().min(LIMITS.passwordMin).max(LIMITS.passwordMax);
 
 export const accentColorSchema = z.enum(ACCENT_COLORS);
+
+/* ──────────────────────────────────────────────────────────────────────────────
+ * Presence
+ * ────────────────────────────────────────────────────────────────────────────*/
+
+export const presenceStateSchema = z.enum(['online', 'away', 'busy', 'offline']);
+export type PresenceState = z.infer<typeof presenceStateSchema>;
+
+export const presenceSchema = z.object({
+  userId: idSchema,
+  state: presenceStateSchema,
+  /** Free-text status line, e.g. "Shipping v1.2". */
+  message: z.string().max(LIMITS.statusMessage).nullable(),
+  /** When the member was last observed on any device. */
+  lastSeenAt: timestampSchema,
+});
+export type Presence = z.infer<typeof presenceSchema>;
