@@ -125,3 +125,38 @@ export const reactionSchema = z.object({
   userIds: z.array(idSchema),
 });
 export type Reaction = z.infer<typeof reactionSchema>;
+
+/* ──────────────────────────────────────────────────────────────────────────────
+ * Messages
+ * ────────────────────────────────────────────────────────────────────────────*/
+
+export const messageKindSchema = z.enum(['text', 'system']);
+export type MessageKind = z.infer<typeof messageKindSchema>;
+
+/** A lightweight quote of the parent message, embedded in replies. */
+export const replyPreviewSchema = z.object({
+  id: idSchema,
+  authorId: idSchema,
+  /** Truncated to a single line by the server. */
+  excerpt: z.string(),
+  /** True when the parent has since been deleted. */
+  isDeleted: z.boolean(),
+});
+export type ReplyPreview = z.infer<typeof replyPreviewSchema>;
+
+export const messageSchema = z.object({
+  id: idSchema,
+  conversationId: idSchema,
+  authorId: idSchema,
+  kind: messageKindSchema,
+  /** Empty string is legal when the message carries only attachments. */
+  body: z.string().max(LIMITS.messageBody),
+  attachments: z.array(attachmentSchema),
+  reactions: z.array(reactionSchema),
+  replyTo: replyPreviewSchema.nullable(),
+  createdAt: timestampSchema,
+  editedAt: timestampSchema.nullable(),
+  /** Tombstoned messages keep their slot in history but lose their body. */
+  deletedAt: timestampSchema.nullable(),
+});
+export type Message = z.infer<typeof messageSchema>;
