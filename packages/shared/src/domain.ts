@@ -160,3 +160,64 @@ export const messageSchema = z.object({
   deletedAt: timestampSchema.nullable(),
 });
 export type Message = z.infer<typeof messageSchema>;
+
+/* ──────────────────────────────────────────────────────────────────────────────
+ * Conversations
+ * ────────────────────────────────────────────────────────────────────────────*/
+
+export const conversationKindSchema = z.enum(['direct', 'channel']);
+export type ConversationKind = z.infer<typeof conversationKindSchema>;
+
+export const memberRoleSchema = z.enum(['owner', 'admin', 'member']);
+export type MemberRole = z.infer<typeof memberRoleSchema>;
+
+export const conversationMemberSchema = z.object({
+  userId: idSchema,
+  role: memberRoleSchema,
+  joinedAt: timestampSchema,
+  /** Timestamp of the newest message this member has acknowledged. */
+  lastReadAt: timestampSchema,
+});
+export type ConversationMember = z.infer<typeof conversationMemberSchema>;
+
+export const conversationSchema = z.object({
+  id: idSchema,
+  kind: conversationKindSchema,
+  /** `null` for direct messages — the client renders the peer's name instead. */
+  name: z.string().min(1).max(64).nullable(),
+  topic: z.string().max(LIMITS.conversationTopic).nullable(),
+  /** Single emoji used as the channel glyph in the sidebar. */
+  icon: z.string().max(8).nullable(),
+  isPrivate: z.boolean(),
+  members: z.array(conversationMemberSchema),
+  /** Denormalised for sidebar ordering and preview without an extra round-trip. */
+  lastMessage: messageSchema.nullable(),
+  unreadCount: z.number().int().nonnegative(),
+  /** True when the viewer is explicitly @-mentioned in unread history. */
+  hasUnreadMention: z.boolean(),
+  isMuted: z.boolean(),
+  isPinned: z.boolean(),
+  createdBy: idSchema,
+  createdAt: timestampSchema,
+  updatedAt: timestampSchema,
+});
+export type Conversation = z.infer<typeof conversationSchema>;
+
+/* ──────────────────────────────────────────────────────────────────────────────
+ * Derived view models
+ * ────────────────────────────────────────────────────────────────────────────*/
+
+/** Who is typing where — broadcast as a replace-whole-set payload. */
+export const typingStateSchema = z.object({
+  conversationId: idSchema,
+  userIds: z.array(idSchema),
+});
+export type TypingState = z.infer<typeof typingStateSchema>;
+
+/** A read cursor moving forward for one member in one conversation. */
+export const readReceiptSchema = z.object({
+  conversationId: idSchema,
+  userId: idSchema,
+  lastReadAt: timestampSchema,
+});
+export type ReadReceipt = z.infer<typeof readReceiptSchema>;
