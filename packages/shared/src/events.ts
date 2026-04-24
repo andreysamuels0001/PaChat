@@ -49,3 +49,35 @@ export const err = (
   message: string,
   fields?: Record<string, string>,
 ): Err => ({ ok: false, error: fields ? { code, message, fields } : { code, message } });
+
+/* ──────────────────────────────────────────────────────────────────────────────
+ * Handshake
+ * ────────────────────────────────────────────────────────────────────────────*/
+
+export const handshakeSchema = z.object({
+  /** Bearer access token issued by `POST /api/auth/login`. */
+  token: z.string().min(1),
+  protocolVersion: z.literal(PROTOCOL_VERSION),
+  /** Reported for diagnostics only; never trusted for authorisation. */
+  client: z.object({
+    name: z.string().max(32),
+    version: z.string().max(32),
+    platform: z.string().max(32),
+  }),
+});
+export type Handshake = z.infer<typeof handshakeSchema>;
+
+/**
+ * The single bootstrap payload pushed immediately after a successful handshake.
+ * One frame carries everything the UI needs to paint a complete first screen —
+ * no waterfall of follow-up requests on launch.
+ */
+export const sessionReadySchema = z.object({
+  self: selfSchema,
+  conversations: z.array(conversationSchema),
+  /** Every user the viewer can see across their conversations. */
+  users: z.array(userSchema),
+  serverTime: timestampSchema,
+  protocolVersion: z.literal(PROTOCOL_VERSION),
+});
+export type SessionReady = z.infer<typeof sessionReadySchema>;
