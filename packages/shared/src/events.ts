@@ -81,3 +81,41 @@ export const sessionReadySchema = z.object({
   protocolVersion: z.literal(PROTOCOL_VERSION),
 });
 export type SessionReady = z.infer<typeof sessionReadySchema>;
+
+/* ──────────────────────────────────────────────────────────────────────────────
+ * Client → server payloads
+ * ────────────────────────────────────────────────────────────────────────────*/
+
+export const sendMessageSchema = z
+  .object({
+    conversationId: idSchema,
+    /**
+     * Client-generated idempotency key. The server echoes it on the created
+     * message so an optimistic bubble can be reconciled instead of duplicated,
+     * and a retried send after a flaky reconnect is a no-op.
+     */
+    nonce: z.string().min(8).max(64),
+    body: z.string().max(LIMITS.messageBody),
+    replyToId: idSchema.nullable().optional(),
+    attachmentIds: z.array(idSchema).max(LIMITS.attachmentsPerMessage).optional(),
+  })
+  .refine((v) => v.body.trim().length > 0 || (v.attachmentIds?.length ?? 0) > 0, {
+    message: 'a message needs text or at least one attachment',
+    path: ['body'],
+  });
+export type SendMessageInput = z.infer<typeof sendMessageSchema>;
+
+export const editMessageSchema = z.object({
+  messageId: idSchema,
+  body: z.string().min(1).max(LIMITS.messageBody),
+});
+export type EditMessageInput = z.infer<typeof editMessageSchema>;
+
+export const deleteMessageSchema = z.object({ messageId: idSchema });
+export type DeleteMessageInput = z.infer<typeof deleteMessageSchema>;
+
+export const reactSchema = z.object({
+  messageId: idSchema,
+  emoji: z.string().min(1).max(16),
+});
+export type ReactInput = z.infer<typeof reactSchema>;
