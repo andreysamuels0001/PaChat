@@ -139,3 +139,23 @@ export const historyPageSchema = z.object({
   hasMore: z.boolean(),
 });
 export type HistoryPage = z.infer<typeof historyPageSchema>;
+
+export const typingPingSchema = z.object({
+  conversationId: idSchema,
+  /** `false` is sent when the composer is cleared, for an instant clear. */
+  isTyping: z.boolean(),
+});
+export type TypingPingInput = z.infer<typeof typingPingSchema>;
+
+export const advanceReadSchema = z.object({
+  conversationId: idSchema,
+  /** Timestamp of the newest message the viewer has actually seen. */
+  readAt: timestampSchema,
+});
+export type AdvanceReadInput = z.infer<typeof advanceReadSchema>;
+
+export const setPresenceSchema = z.object({
+  state: presenceStateSchema.exclude(['offline']),
+  message: z.string().max(LIMITS.statusMessage).nullable().optional(),
+});
+export type SetPresenceInput = z.infer<typeof setPresenceSchema>;
