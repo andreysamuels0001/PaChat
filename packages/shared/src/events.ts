@@ -159,3 +159,47 @@ export const setPresenceSchema = z.object({
   message: z.string().max(LIMITS.statusMessage).nullable().optional(),
 });
 export type SetPresenceInput = z.infer<typeof setPresenceSchema>;
+
+export const createChannelSchema = z.object({
+  name: z.string().trim().min(1).max(64),
+  topic: z.string().max(LIMITS.conversationTopic).nullable().optional(),
+  icon: z.string().max(8).nullable().optional(),
+  isPrivate: z.boolean().optional(),
+  memberIds: z.array(idSchema).max(500).optional(),
+});
+export type CreateChannelInput = z.infer<typeof createChannelSchema>;
+
+export const openDirectSchema = z.object({ userId: idSchema });
+export type OpenDirectInput = z.infer<typeof openDirectSchema>;
+
+export const updateProfileSchema = z.object({
+  displayName: z.string().trim().min(1).max(48).optional(),
+  title: z.string().max(64).nullable().optional(),
+  accentColor: accentColorSchema.optional(),
+  avatarUrl: z.string().url().nullable().optional(),
+});
+export type UpdateProfileInput = z.infer<typeof updateProfileSchema>;
+
+export const updatePreferencesSchema = preferencesSchema.partial();
+export type UpdatePreferencesInput = z.infer<typeof updatePreferencesSchema>;
+
+export const toggleConversationFlagSchema = z.object({
+  conversationId: idSchema,
+  muted: z.boolean().optional(),
+  pinned: z.boolean().optional(),
+});
+export type ToggleConversationFlagInput = z.infer<typeof toggleConversationFlagSchema>;
+
+export const searchSchema = z.object({
+  query: z.string().trim().min(2).max(128),
+  conversationId: idSchema.nullable().optional(),
+  limit: z.number().int().min(1).max(50).optional(),
+});
+export type SearchInput = z.infer<typeof searchSchema>;
+
+export const searchHitSchema = z.object({
+  message: messageSchema,
+  /** Body with `<mark>` delimiters around matched terms, pre-escaped. */
+  highlight: z.string(),
+});
+export type SearchHit = z.infer<typeof searchHitSchema>;
