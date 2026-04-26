@@ -203,3 +203,74 @@ export const searchHitSchema = z.object({
   highlight: z.string(),
 });
 export type SearchHit = z.infer<typeof searchHitSchema>;
+
+/* ──────────────────────────────────────────────────────────────────────────────
+ * Typed Socket.IO surface
+ * ────────────────────────────────────────────────────────────────────────────*/
+
+/** Events the client emits. Each one acknowledges with a typed `Result`. */
+export interface ClientToServerEvents {
+  'conversation:open': (input: OpenConversationInput, ack: Ack<HistoryPage>) => void;
+  'conversation:create': (
+    input: CreateChannelInput,
+    ack: Ack<{ conversation: Conversation }>,
+  ) => void;
+  'conversation:direct': (input: OpenDirectInput, ack: Ack<{ conversation: Conversation }>) => void;
+  'conversation:flags': (
+    input: ToggleConversationFlagInput,
+    ack: Ack<{ conversation: Conversation }>,
+  ) => void;
+  'conversation:leave': (
+    input: OpenConversationInput,
+    ack: Ack<{ conversationId: string }>,
+  ) => void;
+
+  'history:fetch': (input: FetchHistoryInput, ack: Ack<HistoryPage>) => void;
+
+  'message:send': (input: SendMessageInput, ack: Ack<{ message: Message; nonce: string }>) => void;
+  'message:edit': (input: EditMessageInput, ack: Ack<{ message: Message }>) => void;
+  'message:delete': (input: DeleteMessageInput, ack: Ack<{ message: Message }>) => void;
+  'message:react': (input: ReactInput, ack: Ack<{ message: Message }>) => void;
+
+  'typing:ping': (input: TypingPingInput) => void;
+  'read:advance': (input: AdvanceReadInput, ack: Ack<{ receipt: ReadReceipt }>) => void;
+
+  'presence:set': (input: SetPresenceInput, ack: Ack<{ self: Self }>) => void;
+  'profile:update': (input: UpdateProfileInput, ack: Ack<{ self: Self }>) => void;
+  'preferences:update': (input: UpdatePreferencesInput, ack: Ack<{ self: Self }>) => void;
+
+  'search:messages': (input: SearchInput, ack: Ack<{ hits: SearchHit[] }>) => void;
+  'directory:list': (ack: Ack<{ users: User[] }>) => void;
+}
+
+/** Events the server pushes. All are fire-and-forget fan-out. */
+export interface ServerToClientEvents {
+  'session:ready': (payload: SessionReady) => void;
+  'session:revoked': (payload: { reason: string }) => void;
+
+  'conversation:upserted': (payload: { conversation: Conversation }) => void;
+  'conversation:removed': (payload: { conversationId: string }) => void;
+  'conversation:members': (payload: {
+    conversationId: string;
+    members: ConversationMember[];
+  }) => void;
+
+  'message:created': (payload: { message: Message; nonce?: string }) => void;
+  'message:updated': (payload: { message: Message }) => void;
+  'message:deleted': (payload: { message: Message }) => void;
+
+  'typing:changed': (payload: TypingState) => void;
+  'read:changed': (payload: ReadReceipt) => void;
+  'presence:changed': (payload: { userId: string; presence: User['presence'] }) => void;
+  'user:upserted': (payload: { user: User }) => void;
+
+  'server:error': (payload: WireError) => void;
+}
+
+/** Data the server attaches to each authenticated socket. */
+export interface SocketData {
+  userId: string;
+  username: string;
+  sessionId: string;
+  connectedAt: number;
+}
