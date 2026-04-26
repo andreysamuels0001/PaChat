@@ -119,3 +119,23 @@ export const reactSchema = z.object({
   emoji: z.string().min(1).max(16),
 });
 export type ReactInput = z.infer<typeof reactSchema>;
+
+export const openConversationSchema = z.object({ conversationId: idSchema });
+export type OpenConversationInput = z.infer<typeof openConversationSchema>;
+
+export const fetchHistorySchema = z.object({
+  conversationId: idSchema,
+  /** Cursor: return messages strictly older than this id. */
+  before: idSchema.nullable().optional(),
+  limit: z.number().int().min(1).max(LIMITS.messagePageSizeMax).optional(),
+});
+export type FetchHistoryInput = z.infer<typeof fetchHistorySchema>;
+
+export const historyPageSchema = z.object({
+  conversationId: idSchema,
+  /** Oldest-first, ready to prepend to the rendered list. */
+  messages: z.array(messageSchema),
+  /** False once the caller has reached the start of the conversation. */
+  hasMore: z.boolean(),
+});
+export type HistoryPage = z.infer<typeof historyPageSchema>;
