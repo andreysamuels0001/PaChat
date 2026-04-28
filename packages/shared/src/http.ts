@@ -61,3 +61,28 @@ export const authResponseSchema = z.object({
   tokens: tokenPairSchema,
 });
 export type AuthResponse = z.infer<typeof authResponseSchema>;
+
+export const healthResponseSchema = z.object({
+  status: z.literal('ok'),
+  service: z.string(),
+  version: z.string(),
+  protocolVersion: z.number().int(),
+  uptimeSeconds: z.number(),
+  connections: z.number().int(),
+});
+export type HealthResponse = z.infer<typeof healthResponseSchema>;
+
+export const uploadResponseSchema = z.object({
+  attachments: z.array(attachmentSchema),
+});
+export type UploadResponse = z.infer<typeof uploadResponseSchema>;
+
+/** Shape of every non-2xx JSON body returned by the API. */
+export const apiErrorSchema = z.object({
+  error: z.object({
+    code: z.string(),
+    message: z.string(),
+    fields: z.record(z.string()).optional(),
+  }),
+});
+export type ApiError = z.infer<typeof apiErrorSchema>;
