@@ -82,3 +82,37 @@ export function accentFor(seed: string): AccentColor {
   }
   return ACCENT_COLORS[Math.abs(hash) % ACCENT_COLORS.length]!;
 }
+
+/**
+ * Resolves the title shown in the sidebar and header. Channels carry their own
+ * name; a direct conversation borrows the other participant's display name.
+ */
+export function conversationTitle(
+  conversation: Pick<Conversation, 'kind' | 'name' | 'members'>,
+  selfId: string,
+  users: ReadonlyMap<string, Pick<User, 'displayName'>>,
+): string {
+  if (conversation.name) return conversation.name;
+  if (conversation.kind === 'direct') {
+    const peer = conversation.members.find((m) => m.userId !== selfId);
+    const name = peer ? users.get(peer.userId)?.displayName : undefined;
+    return name ?? 'Direct message';
+  }
+  const names = conversation.members
+    .filter((m) => m.userId !== selfId)
+    .map((m) => users.get(m.userId)?.displayName)
+    .filter((n): n is string => Boolean(n));
+  return names.length > 0 ? names.join(', ') : 'Untitled';
+}
+
+/** One-line preview used in the sidebar beneath each conversation title. */
+export function messagePreview(message: Message | null, authorName?: string): string {
+  if (!message) return 'No messages yet';
+  if (message.deletedAt) return 'Message deleted';
+  const prefix = message.kind === 'system' || !authorName ? '' : `${authorName}: `;
+  if (message.body.trim().length === 0 && message.attachments.length > 0) {
+    const n = message.attachments.length;
+    return `${prefix}${n} attachment${n === 1 ? '' : 's'}`;
+  }
+  return prefix + message.body.replace(/\s+/g, ' ').trim();
+}
