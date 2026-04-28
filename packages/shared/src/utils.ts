@@ -187,3 +187,23 @@ export function formatTypingSentence(names: string[]): string | null {
   if (names.length === 2) return `${names[0]} and ${names[1]} are typing`;
   return `${names[0]} and ${names.length - 1} others are typing`;
 }
+
+/* ──────────────────────────────────────────────────────────────────────────────
+ * Grouping
+ * ────────────────────────────────────────────────────────────────────────────*/
+
+/** Window inside which consecutive messages from one author are grouped. */
+export const GROUPING_WINDOW_MS = 5 * 60 * 1000;
+
+/**
+ * True when `message` should render as a continuation of `previous` — same
+ * author, close in time, same day, and neither is a system notice.
+ */
+export function isGroupedWith(message: Message, previous: Message | undefined): boolean {
+  if (!previous) return false;
+  if (message.kind === 'system' || previous.kind === 'system') return false;
+  if (message.authorId !== previous.authorId) return false;
+  if (message.replyTo) return false;
+  if (message.createdAt - previous.createdAt > GROUPING_WINDOW_MS) return false;
+  return new Date(message.createdAt).toDateString() === new Date(previous.createdAt).toDateString();
+}
