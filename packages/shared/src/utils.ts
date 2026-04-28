@@ -57,3 +57,28 @@ function randomBytes(length: number): Uint8Array {
 export function createNonce(): string {
   return `n_${createId()}`;
 }
+
+/* ──────────────────────────────────────────────────────────────────────────────
+ * Display helpers — shared so the client and server-generated system messages
+ * describe people identically.
+ * ────────────────────────────────────────────────────────────────────────────*/
+
+/** Up to two uppercase initials, derived from a display name. */
+export function initialsOf(displayName: string): string {
+  const parts = displayName
+    .split(/[\s._-]+/)
+    .map((p) => p.trim())
+    .filter(Boolean);
+  if (parts.length === 0) return '?';
+  if (parts.length === 1) return parts[0]!.slice(0, 2).toUpperCase();
+  return (parts[0]![0]! + parts[parts.length - 1]![0]!).toUpperCase();
+}
+
+/** Deterministically derives an accent colour from any stable string. */
+export function accentFor(seed: string): AccentColor {
+  let hash = 0;
+  for (let i = 0; i < seed.length; i += 1) {
+    hash = (hash * 31 + seed.charCodeAt(i)) | 0;
+  }
+  return ACCENT_COLORS[Math.abs(hash) % ACCENT_COLORS.length]!;
+}
