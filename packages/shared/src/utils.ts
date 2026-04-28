@@ -116,3 +116,74 @@ export function messagePreview(message: Message | null, authorName?: string): st
   }
   return prefix + message.body.replace(/\s+/g, ' ').trim();
 }
+
+/* ──────────────────────────────────────────────────────────────────────────────
+ * Formatting
+ * ────────────────────────────────────────────────────────────────────────────*/
+
+const KIB = 1024;
+const UNITS = ['B', 'KB', 'MB', 'GB'] as const;
+
+export function formatBytes(bytes: number): string {
+  let value = bytes;
+  let unit = 0;
+  while (value >= KIB && unit < UNITS.length - 1) {
+    value /= KIB;
+    unit += 1;
+  }
+  const decimals = unit === 0 || value >= 10 ? 0 : 1;
+  return `${value.toFixed(decimals)} ${UNITS[unit]}`;
+}
+
+/** "now", "4m", "3h", "Tue", "14 Mar" — compact, sidebar-friendly. */
+export function formatRelativeTime(timestamp: number, now: number = Date.now()): string {
+  const delta = Math.max(0, now - timestamp);
+  const minutes = Math.floor(delta / 60_000);
+  if (minutes < 1) return 'now';
+  if (minutes < 60) return `${minutes}m`;
+  const hours = Math.floor(minutes / 60);
+  if (hours < 24) return `${hours}h`;
+  const days = Math.floor(hours / 24);
+  if (days < 7) {
+    return new Date(timestamp).toLocaleDateString(undefined, { weekday: 'short' });
+  }
+  return new Date(timestamp).toLocaleDateString(undefined, { day: 'numeric', month: 'short' });
+}
+
+export function formatClockTime(timestamp: number): string {
+  return new Date(timestamp).toLocaleTimeString(undefined, {
+    hour: '2-digit',
+    minute: '2-digit',
+  });
+}
+
+/** "Today", "Yesterday", or a full date — used for day separators in the log. */
+export function formatDayLabel(timestamp: number, now: number = Date.now()): string {
+  const startOf = (ms: number) => {
+    const d = new Date(ms);
+    d.setHours(0, 0, 0, 0);
+    return d.getTime();
+  };
+  const days = Math.round((startOf(now) - startOf(timestamp)) / 86_400_000);
+  if (days === 0) return 'Today';
+  if (days === 1) return 'Yesterday';
+  if (days < 7) {
+    return new Date(timestamp).toLocaleDateString(undefined, { weekday: 'long' });
+  }
+  return new Date(timestamp).toLocaleDateString(undefined, {
+    day: 'numeric',
+    month: 'long',
+    year: startOf(now) - startOf(timestamp) > 300 * 86_400_000 ? 'numeric' : undefined,
+  });
+}
+
+/**
+ * Renders a human sentence for a typing set: "Ada is typing", "Ada and Linus
+ * are typing", "Ada and 4 others are typing".
+ */
+export function formatTypingSentence(names: string[]): string | null {
+  if (names.length === 0) return null;
+  if (names.length === 1) return `${names[0]} is typing`;
+  if (names.length === 2) return `${names[0]} and ${names[1]} are typing`;
+  return `${names[0]} and ${names.length - 1} others are typing`;
+}
