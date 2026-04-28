@@ -207,3 +207,50 @@ export function isGroupedWith(message: Message, previous: Message | undefined): 
   if (message.createdAt - previous.createdAt > GROUPING_WINDOW_MS) return false;
   return new Date(message.createdAt).toDateString() === new Date(previous.createdAt).toDateString();
 }
+
+/* ──────────────────────────────────────────────────────────────────────────────
+ * Mentions
+ * ────────────────────────────────────────────────────────────────────────────*/
+
+const MENTION_PATTERN = /(^|[\s(])@([a-z0-9](?:[a-z0-9._-]*[a-z0-9])?)/gi;
+
+/** Extracts the distinct usernames mentioned in a message body. */
+export function extractMentions(body: string): string[] {
+  const found = new Set<string>();
+  for (const match of body.matchAll(MENTION_PATTERN)) {
+    if (match[2]) found.add(match[2].toLowerCase());
+  }
+  return [...found];
+}
+
+/** True when `body` mentions `username`, or addresses the whole channel. */
+export function mentions(body: string, username: string): boolean {
+  const found = extractMentions(body);
+  return found.includes(username.toLowerCase()) || found.includes('everyone');
+}
+
+/* ──────────────────────────────────────────────────────────────────────────────
+ * Misc
+ * ────────────────────────────────────────────────────────────────────────────*/
+
+/** Collapses whitespace and clips to `max` characters with an ellipsis. */
+export function truncate(text: string, max: number): string {
+  const flat = text.replace(/\s+/g, ' ').trim();
+  return flat.length <= max ? flat : `${flat.slice(0, max - 1).trimEnd()}…`;
+}
+
+export function clamp(value: number, min: number, max: number): number {
+  return Math.min(Math.max(value, min), max);
+}
+
+/** Escapes a string for safe interpolation into HTML. */
+export function escapeHtml(text: string): string {
+  return text
+    .replace(/&/g, '&amp;')
+    .replace(/</g, '&lt;')
+    .replace(/>/g, '&gt;')
+    .replace(/"/g, '&quot;')
+    .replace(/'/g, '&#39;');
+}
+
+export const sleep = (ms: number): Promise<void> => new Promise((r) => setTimeout(r, ms));
