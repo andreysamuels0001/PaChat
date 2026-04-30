@@ -40,3 +40,32 @@ if (!parsed.success) {
 
 const raw = parsed.data;
 const absolutise = (p: string) => (isAbsolute(p) ? p : resolve(PACKAGE_ROOT, p));
+
+export const env = {
+  ...raw,
+  isProduction: raw.NODE_ENV === 'production',
+  isDevelopment: raw.NODE_ENV === 'development',
+  dataDir: absolutise(raw.DATA_DIR),
+  uploadDir: absolutise(raw.UPLOAD_DIR),
+  databasePath: resolve(absolutise(raw.DATA_DIR), 'pachat.db'),
+  corsOrigins: raw.CORS_ORIGINS.split(',')
+    .map((o) => o.trim())
+    .filter(Boolean),
+} as const;
+
+export type Env = typeof env;
+
+/**
+ * Refuse to boot a production instance that is still signing tokens with the
+ * placeholder secrets shipped in `.env.example` — the single most common way a
+ * self-hosted chat server ends up trivially impersonatable.
+ */
+if (env.isProduction) {
+  const placeholders = [env.JWT_ACCESS_SECRET, env.JWT_REFRESH_SECRET].filter((s) =>
+    s.startsWith('change-me'),
+  );
+  if (placeholders.length > 0) {
+    console.error('\n✖ Refusing to start: JWT secrets are still the example placeholders.\n');
+    process.exit(1);
+  }
+}
