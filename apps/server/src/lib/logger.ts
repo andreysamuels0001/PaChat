@@ -69,3 +69,25 @@ function emit(level: Level, scope: string, message: string, fields?: Fields): vo
     process.stdout.write(`${DIM}${payload.err.stack}${RESET}\n`);
   }
 }
+
+export interface Logger {
+  trace(message: string, fields?: Fields): void;
+  debug(message: string, fields?: Fields): void;
+  info(message: string, fields?: Fields): void;
+  warn(message: string, fields?: Fields): void;
+  error(message: string, fields?: Fields): void;
+  child(scope: string): Logger;
+}
+
+export function createLogger(scope: string): Logger {
+  return {
+    trace: (m, f) => emit('trace', scope, m, f),
+    debug: (m, f) => emit('debug', scope, m, f),
+    info: (m, f) => emit('info', scope, m, f),
+    warn: (m, f) => emit('warn', scope, m, f),
+    error: (m, f) => emit('error', scope, m, f),
+    child: (sub) => createLogger(`${scope}:${sub}`),
+  };
+}
+
+export const logger = createLogger('pachat');
