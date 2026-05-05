@@ -59,3 +59,38 @@ export const rateLimited = (message = 'Too many requests — slow down') =>
 
 export const internal = (message: string, cause?: unknown) =>
   new AppError(ERROR_CODES.internal, message, cause !== undefined ? { cause } : {});
+
+/** Flattens a Zod failure into `{ 'path.to.field': 'reason' }`. */
+export function fieldsFromZod(error: ZodError): Record<string, string> {
+  const fields: Record<string, string> = {};
+  for (const issue of error.issues) {
+    const key = issue.path.join('.') || '_';
+    fields[key] ??= issue.message;
+  }
+  return fields;
+}
+
+/** Normalises anything thrown anywhere into an `AppError`. */
+export function toAppError(error: unknown): AppError {
+  if (error instanceof AppError) return error;
+  if (error instanceof ZodError) {
+    return validationFailed('Some fields need attention', fieldsFromZod(error));
+  }
+  if (error instanceof Error) return internal(error.message, error);
+  return internal('Unexpected error', error);
+}
+
+/**
+ * The client-safe projection of an error. Internal failures are deliberately
+ * flattened to a generic sentence so stack traces and SQL text never leak.
+ */
+export function publicShape(error: AppError): {
+  code: ErrorCode;
+  message: string;
+  fields?: Record<string, string>;
+} {
+  const message = error.isInternal ? 'Something went wrong on our side' : error.message;
+  return error.fields
+    ? { code: error.code, message, fields: error.fields }
+    : { code: error.code, message };
+}
