@@ -47,3 +47,27 @@ export function getDb(): Db {
   log.debug('database opened', { path: env.databasePath });
   return db;
 }
+
+export function closeDb(): void {
+  if (!instance) return;
+  // Fold the WAL back into the main database file so a copied `pachat.db` is
+  // complete on its own.
+  try {
+    instance.pragma('wal_checkpoint(TRUNCATE)');
+  } catch {
+    /* best effort on shutdown */
+  }
+  instance.close();
+  instance = null;
+  log.debug('database closed');
+}
+
+/**
+ * Runs `fn` inside an IMMEDIATE transaction. `better-sqlite3` is synchronous,
+ * so this is a real atomic unit: any throw rolls the whole thing back.
+ */
+export function transaction<T>(fn: (db: Db) => T): T {
+  const db = getDb();
+  const run = db.transaction(fn as (db: Db) => T);
+  return run.immediate(db);
+}
