@@ -39,3 +39,23 @@ const STATUS_FOR: Record<ErrorCode, number> = {
   [ERROR_CODES.payloadTooLarge]: 413,
   [ERROR_CODES.internal]: 500,
 };
+
+export const unauthorized = (message = 'Authentication required') =>
+  new AppError(ERROR_CODES.unauthorized, message);
+
+export const forbidden = (message = 'You do not have access to that') =>
+  new AppError(ERROR_CODES.forbidden, message);
+
+export const notFound = (message = 'Not found') => new AppError(ERROR_CODES.notFound, message);
+
+export const conflict = (message: string, fields?: Record<string, string>) =>
+  new AppError(ERROR_CODES.conflict, message, fields ? { fields } : {});
+
+export const validationFailed = (message: string, fields?: Record<string, string>) =>
+  new AppError(ERROR_CODES.validation, message, fields ? { fields } : {});
+
+export const rateLimited = (message = 'Too many requests — slow down') =>
+  new AppError(ERROR_CODES.rateLimited, message);
+
+export const internal = (message: string, cause?: unknown) =>
+  new AppError(ERROR_CODES.internal, message, cause !== undefined ? { cause } : {});
