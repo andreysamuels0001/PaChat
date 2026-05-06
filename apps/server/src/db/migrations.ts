@@ -149,4 +149,40 @@ export const MIGRATIONS: readonly Migration[] = [
       CREATE INDEX attachments_orphaned   ON attachments (created_at) WHERE message_id IS NULL;
     `,
   },
+
+  {
+    version: 2,
+    name: 'message_full_text_search',
+    sql: /* sql */ `
+      -- An external-content FTS5 index: the tokenised copy lives here while
+      -- the authoritative rows stay in \`messages\`, so search costs index
+      -- space but never duplicates message bodies.
+      CREATE VIRTUAL TABLE messages_fts USING fts5(
+        body,
+        content='messages',
+        content_rowid='rowid',
+        tokenize='unicode61 remove_diacritics 2'
+      );
+
+      -- Triggers keep the index in lockstep with writes. Deletes and updates
+      -- must emit the 'delete' sentinel row before reinserting, otherwise
+      -- stale terms linger and search returns tombstoned messages.
+      CREATE TRIGGER messages_fts_insert AFTER INSERT ON messages BEGIN
+        INSERT INTO messages_fts (rowid, body) VALUES (new.rowid, new.body);
+      END;
+
+      CREATE TRIGGER messages_fts_delete AFTER DELETE ON messages BEGIN
+        INSERT INTO messages_fts (messages_fts, rowid, body)
+        VALUES ('delete', old.rowid, old.body);
+      END;
+
+      CREATE TRIGGER messages_fts_update AFTER UPDATE OF body ON messages BEGIN
+        INSERT INTO messages_fts (messages_fts, rowid, body)
+        VALUES ('delete', old.rowid, old.body);
+        INSERT INTO messages_fts (rowid, body) VALUES (new.rowid, new.body);
+      END;
+    `,
+  },
 ];
+
+export const LATEST_VERSION = MIGRATIONS.reduce((max, m) => Math.max(max, m.version), 0);
