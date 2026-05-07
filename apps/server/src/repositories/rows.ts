@@ -109,3 +109,27 @@ export const conversationKindOf = (row: ConversationRow): ConversationKind =>
   row.kind as ConversationKind;
 
 export const memberRoleOf = (row: MemberRow): MemberRole => row.role as MemberRole;
+
+/* ─────────────────────────────────────────────────────────────messages ────*/
+
+export interface MessageRow {
+  id: string;
+  conversation_id: string;
+  author_id: string;
+  kind: string;
+  body: string;
+  reply_to_id: string | null;
+  nonce: string | null;
+  created_at: number;
+  edited_at: number | null;
+  deleted_at: number | null;
+}
+
+export const messageKindOf = (row: MessageRow): MessageKind => row.kind as MessageKind;
+
+export interface ReactionRow {
+  message_id: string;
+  user_id: string;
+  emoji: string;
+  created_at: number;
+}
