@@ -79,3 +79,33 @@ export function toSelf(row: UserRow): Self {
     preferences: parsePreferences(row.preferences),
   };
 }
+
+/* ──────────────────────────────────────────────────────── conversations ────*/
+
+export interface ConversationRow {
+  id: string;
+  kind: string;
+  name: string | null;
+  topic: string | null;
+  icon: string | null;
+  is_private: number;
+  direct_key: string | null;
+  created_by: string;
+  created_at: number;
+  updated_at: number;
+}
+
+export interface MemberRow {
+  conversation_id: string;
+  user_id: string;
+  role: string;
+  joined_at: number;
+  last_read_at: number;
+  is_muted: number;
+  is_pinned: number;
+}
+
+export const conversationKindOf = (row: ConversationRow): ConversationKind =>
+  row.kind as ConversationKind;
+
+export const memberRoleOf = (row: MemberRow): MemberRole => row.role as MemberRole;
