@@ -62,3 +62,16 @@ export function runMigrations(): { from: number; to: number; applied: string[] }
 
   return { from: current, to: LATEST_VERSION, applied };
 }
+
+/** Reports the schema version without mutating anything. */
+export function schemaVersion(): number {
+  const db = getDb();
+  const exists = db
+    .prepare(`SELECT 1 FROM sqlite_master WHERE type='table' AND name='schema_migrations'`)
+    .get();
+  if (!exists) return 0;
+  const row = db.prepare('SELECT MAX(version) AS version FROM schema_migrations').get() as {
+    version: number | null;
+  };
+  return row.version ?? 0;
+}
