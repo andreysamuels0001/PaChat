@@ -133,3 +133,46 @@ export interface ReactionRow {
   emoji: string;
   created_at: number;
 }
+
+/* ───────────────────────────────────────────────────────── attachments ────*/
+
+export interface AttachmentRow {
+  id: string;
+  message_id: string | null;
+  owner_id: string;
+  name: string;
+  mime_type: string;
+  byte_size: number;
+  storage_key: string;
+  width: number | null;
+  height: number | null;
+  created_at: number;
+}
+
+export function toAttachment(row: AttachmentRow): Attachment {
+  return {
+    id: row.id,
+    name: row.name,
+    mimeType: row.mime_type,
+    byteSize: row.byte_size,
+    // Served by the static file route mounted at `/files`. The name is
+    // appended so a browser download gets a sensible filename.
+    url: `/files/${row.storage_key}/${encodeURIComponent(row.name)}`,
+    width: row.width,
+    height: row.height,
+  };
+}
+
+/* ─────────────────────────────────────────────────────────── sessions ────*/
+
+export interface SessionRow {
+  id: string;
+  user_id: string;
+  refresh_token_hash: string;
+  user_agent: string | null;
+  ip: string | null;
+  created_at: number;
+  last_used_at: number;
+  expires_at: number;
+  revoked_at: number | null;
+}
