@@ -149,3 +149,27 @@ export function updatePreferences(id: string, patch: Partial<Preferences>): User
 
   return findUserById(id)!;
 }
+
+export function setPresence(
+  id: string,
+  state: PresenceState,
+  message?: string | null,
+): UserRow | null {
+  const assignments = ['presence_state = @state', 'last_seen_at = @now', 'updated_at = @now'];
+  const params: Record<string, unknown> = { id, state, now: Date.now() };
+
+  if (message !== undefined) {
+    assignments.push('presence_message = @message');
+    params.message = message;
+  }
+
+  getDb()
+    .prepare(`UPDATE users SET ${assignments.join(', ')} WHERE id = @id`)
+    .run(params);
+
+  return findUserById(id);
+}
+
+export function touchLastSeen(id: string): void {
+  getDb().prepare('UPDATE users SET last_seen_at = ? WHERE id = ?').run(Date.now(), id);
+}
