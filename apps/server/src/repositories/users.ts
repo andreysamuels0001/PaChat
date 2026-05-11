@@ -83,3 +83,69 @@ export function createUser(input: CreateUserInput): UserRow {
   if (!row) throw new Error('user vanished immediately after insert');
   return row;
 }
+
+export interface ProfilePatch {
+  displayName?: string;
+  title?: string | null;
+  accentColor?: AccentColor;
+  avatarUrl?: string | null;
+}
+
+/**
+ * Applies a sparse profile patch. Builds the SET clause from only the keys
+ * actually present, so an omitted field is never silently overwritten with
+ * `undefined`.
+ */
+export function updateProfile(id: string, patch: ProfilePatch): UserRow {
+  const assignments: string[] = [];
+  const params: Record<string, unknown> = { id, now: Date.now() };
+
+  if (patch.displayName !== undefined) {
+    assignments.push('display_name = @displayName');
+    params.displayName = patch.displayName;
+  }
+  if (patch.title !== undefined) {
+    assignments.push('title = @title');
+    params.title = patch.title;
+  }
+  if (patch.accentColor !== undefined) {
+    assignments.push('accent_color = @accentColor');
+    params.accentColor = patch.accentColor;
+  }
+  if (patch.avatarUrl !== undefined) {
+    assignments.push('avatar_url = @avatarUrl');
+    params.avatarUrl = patch.avatarUrl;
+  }
+
+  if (assignments.length > 0) {
+    assignments.push('updated_at = @now');
+    getDb()
+      .prepare(`UPDATE users SET ${assignments.join(', ')} WHERE id = @id`)
+      .run(params);
+  }
+
+  const row = findUserById(id);
+  if (!row) throw new Error(`user ${id} not found`);
+  return row;
+}
+
+/** Merges a sparse preferences patch into the stored JSON blob. */
+export function updatePreferences(id: string, patch: Partial<Preferences>): UserRow {
+  const row = findUserById(id);
+  if (!row) throw new Error(`user ${id} not found`);
+
+  const current = toSelf(row).preferences;
+  const next: Preferences = { ...current, ...patch };
+
+  getDb()
+    .prepare('UPDATE users SET preferences = @preferences, updated_at = @now WHERE id = @id')
+    .run({ id, preferences: JSON.stringify(next), now: Date.now() });
+
+  // An accent change in preferences is mirrored onto the public column so
+  // other members see the new colour without reading private preferences.
+  if (patch.accentColor && patch.accentColor !== row.accent_color) {
+    return updateProfile(id, { accentColor: patch.accentColor });
+  }
+
+  return findUserById(id)!;
+}
