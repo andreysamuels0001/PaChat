@@ -173,3 +173,49 @@ export function setPresence(
 export function touchLastSeen(id: string): void {
   getDb().prepare('UPDATE users SET last_seen_at = ? WHERE id = ?').run(Date.now(), id);
 }
+
+/**
+ * Every user that shares at least one conversation with `userId`, plus the
+ * viewer. This is the visibility boundary: a member is never told about
+ * accounts they have no channel in common with.
+ */
+export function listVisibleUsers(userId: string): User[] {
+  const rows = getDb()
+    .prepare(
+      `SELECT DISTINCT u.*
+         FROM users u
+         JOIN conversation_members m  ON m.user_id = u.id
+        WHERE m.conversation_id IN (
+                SELECT conversation_id FROM conversation_members WHERE user_id = ?
+              )
+           OR u.id = ?
+        ORDER BY u.display_name COLLATE NOCASE`,
+    )
+    .all(userId, userId) as UserRow[];
+  return rows.map(toUser);
+}
+
+/** The full member directory, used by the "new conversation" picker. */
+export function listDirectory(excludeUserId: string): User[] {
+  const rows = getDb()
+    .prepare(`${SELECT} WHERE id != ? ORDER BY display_name COLLATE NOCASE`)
+    .all(excludeUserId) as UserRow[];
+  return rows.map(toUser);
+}
+
+export function getSelf(id: string): Self | null {
+  const row = findUserById(id);
+  return row ? toSelf(row) : null;
+}
+
+export function getPublicUser(id: string): User | null {
+  const row = findUserById(id);
+  return row ? toUser(row) : null;
+}
+
+/** Marks every account offline — called on boot to clear stale presence. */
+export function resetAllPresence(): void {
+  getDb()
+    .prepare(`UPDATE users SET presence_state = 'offline' WHERE presence_state != 'offline'`)
+    .run();
+}
