@@ -40,3 +40,69 @@ export function createSession(input: CreateSessionInput): SessionRow {
 
   return getDb().prepare('SELECT * FROM sessions WHERE id = ?').get(id) as SessionRow;
 }
+
+/** Looks up a live (unrevoked, unexpired) session by refresh token digest. */
+export function findLiveSessionByDigest(digest: string): SessionRow | null {
+  const row = getDb()
+    .prepare(
+      `SELECT * FROM sessions
+        WHERE refresh_token_hash = ? AND revoked_at IS NULL AND expires_at > ?`,
+    )
+    .get(digest, Date.now()) as SessionRow | undefined;
+  return row ?? null;
+}
+
+export function findSessionById(id: string): SessionRow | null {
+  const row = getDb().prepare('SELECT * FROM sessions WHERE id = ?').get(id) as
+    SessionRow | undefined;
+  return row ?? null;
+}
+
+export function isSessionLive(id: string): boolean {
+  const row = getDb()
+    .prepare(
+      `SELECT 1 AS live FROM sessions
+        WHERE id = ? AND revoked_at IS NULL AND expires_at > ?`,
+    )
+    .get(id, Date.now()) as { live: number } | undefined;
+  return Boolean(row);
+}
+
+/**
+ * Rotates a session's refresh token in place, keeping the session id stable so
+ * the device keeps its identity in the session list.
+ */
+export function rotateSession(id: string, nextDigest: string, nextExpiresAt: number): void {
+  getDb()
+    .prepare(
+      `UPDATE sessions
+          SET refresh_token_hash = @digest, expires_at = @expiresAt, last_used_at = @now
+        WHERE id = @id`,
+    )
+    .run({ id, digest: nextDigest, expiresAt: nextExpiresAt, now: Date.now() });
+}
+
+export function revokeSession(id: string): void {
+  getDb()
+    .prepare('UPDATE sessions SET revoked_at = ? WHERE id = ? AND revoked_at IS NULL')
+    .run(Date.now(), id);
+}
+
+/** Signs a user out of every device — used after a password change. */
+export function revokeAllSessionsFor(userId: string): number {
+  const result = getDb()
+    .prepare('UPDATE sessions SET revoked_at = ? WHERE user_id = ? AND revoked_at IS NULL')
+    .run(Date.now(), userId);
+  return result.changes;
+}
+
+/** Deletes expired and long-revoked rows. Called on boot and daily. */
+export function pruneSessions(): number {
+  const cutoff = Date.now() - 7 * 24 * 60 * 60 * 1000;
+  const result = getDb()
+    .prepare(
+      'DELETE FROM sessions WHERE expires_at < ? OR (revoked_at IS NOT NULL AND revoked_at < ?)',
+    )
+    .run(Date.now(), cutoff);
+  return result.changes;
+}
