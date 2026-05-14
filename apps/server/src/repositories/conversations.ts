@@ -79,3 +79,31 @@ export function conversationIdsFor(userId: string): string[] {
     .all(userId) as Array<{ conversation_id: string }>;
   return rows.map((r) => r.conversation_id);
 }
+
+/* ─────────────────────────────────────────────────────────── hydration ────*/
+
+function hydrate(
+  row: ConversationRow,
+  members: ConversationMember[],
+  lastMessageRow: MessageRow | null,
+  memberFlags: Pick<MemberRow, 'is_muted' | 'is_pinned' | 'last_read_at'> | null,
+  unread: UnreadSummary,
+): Conversation {
+  return {
+    id: row.id,
+    kind: conversationKindOf(row),
+    name: row.name,
+    topic: row.topic,
+    icon: row.icon,
+    isPrivate: asBool(row.is_private),
+    members,
+    lastMessage: lastMessageRow ? (hydrateMessages([lastMessageRow])[0] ?? null) : null,
+    unreadCount: unread.count,
+    hasUnreadMention: unread.hasMention,
+    isMuted: memberFlags ? asBool(memberFlags.is_muted) : false,
+    isPinned: memberFlags ? asBool(memberFlags.is_pinned) : false,
+    createdBy: row.created_by,
+    createdAt: row.created_at,
+    updatedAt: row.updated_at,
+  };
+}
