@@ -208,3 +208,51 @@ export function findConversationRow(id: string): ConversationRow | null {
     ConversationRow | undefined;
   return row ?? null;
 }
+
+/* ──────────────────────────────────────────────────────────── creation ────*/
+
+export interface CreateChannelRecord {
+  name: string;
+  topic?: string | null;
+  icon?: string | null;
+  isPrivate: boolean;
+  createdBy: string;
+  memberIds: string[];
+}
+
+export function createChannel(input: CreateChannelRecord): string {
+  return transaction((db) => {
+    const now = Date.now();
+    const id = createId(now);
+
+    db.prepare(
+      `INSERT INTO conversations (
+         id, kind, name, topic, icon, is_private, direct_key, created_by, created_at, updated_at
+       ) VALUES (@id, 'channel', @name, @topic, @icon, @isPrivate, NULL, @createdBy, @now, @now)`,
+    ).run({
+      id,
+      name: input.name,
+      topic: input.topic ?? null,
+      icon: input.icon ?? null,
+      isPrivate: input.isPrivate ? 1 : 0,
+      createdBy: input.createdBy,
+      now,
+    });
+
+    const addMember = db.prepare(
+      `INSERT OR IGNORE INTO conversation_members (
+         conversation_id, user_id, role, joined_at, last_read_at, is_muted, is_pinned
+       ) VALUES (?, ?, ?, ?, ?, 0, 0)`,
+    );
+
+    addMember.run(id, input.createdBy, 'owner' satisfies MemberRole, now, now);
+    for (const memberId of input.memberIds) {
+      if (memberId === input.createdBy) continue;
+      // `last_read_at = 0` so invitees see existing history as unread rather
+      // than silently starting caught up.
+      addMember.run(id, memberId, 'member' satisfies MemberRole, now, 0);
+    }
+
+    return id;
+  });
+}
