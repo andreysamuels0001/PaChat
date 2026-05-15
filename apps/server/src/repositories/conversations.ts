@@ -107,3 +107,104 @@ function hydrate(
     updatedAt: row.updated_at,
   };
 }
+
+/**
+ * Loads every conversation visible to the viewer, fully hydrated.
+ *
+ * Members and last messages are fetched in two batch queries rather than per
+ * conversation, so the bootstrap payload costs a constant number of statements
+ * no matter how many channels the member has joined.
+ */
+export function listForViewer(viewer: Viewer): Conversation[] {
+  const db = getDb();
+
+  const rows = db
+    .prepare(
+      `SELECT c.*
+         FROM conversations c
+         JOIN conversation_members m ON m.conversation_id = c.id
+        WHERE m.user_id = ?
+        ORDER BY m.is_pinned DESC, c.updated_at DESC`,
+    )
+    .all(viewer.id) as ConversationRow[];
+
+  if (rows.length === 0) return [];
+
+  const ids = rows.map((r) => r.id);
+  const marks = new Array(ids.length).fill('?').join(', ');
+
+  const memberRows = db
+    .prepare(
+      `SELECT * FROM conversation_members
+        WHERE conversation_id IN (${marks})
+        ORDER BY joined_at ASC`,
+    )
+    .all(...ids) as MemberRow[];
+
+  const membersByConversation = new Map<string, ConversationMember[]>();
+  const viewerFlags = new Map<string, MemberRow>();
+  for (const row of memberRows) {
+    const list = membersByConversation.get(row.conversation_id) ?? [];
+    list.push(toMember(row));
+    membersByConversation.set(row.conversation_id, list);
+    if (row.user_id === viewer.id) viewerFlags.set(row.conversation_id, row);
+  }
+
+  // One row per conversation: its newest message. The correlated subquery is
+  // index-served by `(conversation_id, id DESC)`.
+  const lastRows = db
+    .prepare(
+      `SELECT * FROM messages
+        WHERE id IN (
+          SELECT (SELECT id FROM messages m2
+                   WHERE m2.conversation_id = c.id
+                   ORDER BY m2.id DESC LIMIT 1)
+            FROM conversations c
+           WHERE c.id IN (${marks})
+        )`,
+    )
+    .all(...ids) as MessageRow[];
+
+  const lastByConversation = new Map<string, MessageRow>();
+  for (const row of lastRows) lastByConversation.set(row.conversation_id, row);
+
+  return rows.map((row) => {
+    const flags = viewerFlags.get(row.id) ?? null;
+    const unread = flags
+      ? unreadFor(row.id, viewer.id, viewer.username, flags.last_read_at)
+      : { count: 0, hasMention: false };
+    return hydrate(
+      row,
+      membersByConversation.get(row.id) ?? [],
+      lastByConversation.get(row.id) ?? null,
+      flags,
+      unread,
+    );
+  });
+}
+
+/** A single conversation, or `null` when the viewer is not a member. */
+export function getForViewer(conversationId: string, viewer: Viewer): Conversation | null {
+  const db = getDb();
+  const row = db.prepare('SELECT * FROM conversations WHERE id = ?').get(conversationId) as
+    ConversationRow | undefined;
+  if (!row) return null;
+
+  const flags = memberRecord(conversationId, viewer.id);
+  if (!flags) return null;
+
+  const lastRow = db
+    .prepare('SELECT * FROM messages WHERE conversation_id = ? ORDER BY id DESC LIMIT 1')
+    .get(conversationId) as MessageRow | undefined;
+
+  const unread = unreadFor(conversationId, viewer.id, viewer.username, flags.last_read_at);
+
+  return hydrate(row, membersOf(conversationId), lastRow ?? null, flags, unread);
+}
+
+/** Raw row lookup, for authorisation checks that do not need hydration. */
+export function findConversationRow(id: string): ConversationRow | null {
+  const row = getDb().prepare('SELECT * FROM conversations WHERE id = ?').get(id) as
+    ConversationRow | undefined;
+  return row ?? null;
+}
