@@ -309,3 +309,44 @@ export function findOrCreateDirect(userA: string, userB: string): string {
     throw error;
   }
 }
+
+/* ──────────────────────────────────────────────────────────── mutation ────*/
+
+export function addMembers(conversationId: string, userIds: string[]): string[] {
+  return transaction((db) => {
+    const now = Date.now();
+    const insert = db.prepare(
+      `INSERT OR IGNORE INTO conversation_members (
+         conversation_id, user_id, role, joined_at, last_read_at, is_muted, is_pinned
+       ) VALUES (?, ?, 'member', ?, 0, 0, 0)`,
+    );
+    const added: string[] = [];
+    for (const userId of userIds) {
+      const result = insert.run(conversationId, userId, now);
+      if (result.changes > 0) added.push(userId);
+    }
+    if (added.length > 0) {
+      db.prepare('UPDATE conversations SET updated_at = ? WHERE id = ?').run(now, conversationId);
+    }
+    return added;
+  });
+}
+
+export function removeMember(conversationId: string, userId: string): boolean {
+  const result = getDb()
+    .prepare('DELETE FROM conversation_members WHERE conversation_id = ? AND user_id = ?')
+    .run(conversationId, userId);
+  return result.changes > 0;
+}
+
+/** Deletes a conversation once its last member leaves. */
+export function deleteIfEmpty(conversationId: string): boolean {
+  return transaction((db) => {
+    const row = db
+      .prepare('SELECT COUNT(*) AS n FROM conversation_members WHERE conversation_id = ?')
+      .get(conversationId) as { n: number };
+    if (row.n > 0) return false;
+    db.prepare('DELETE FROM conversations WHERE id = ?').run(conversationId);
+    return true;
+  });
+}
