@@ -256,3 +256,56 @@ export function createChannel(input: CreateChannelRecord): string {
     return id;
   });
 }
+
+/** The existing direct conversation between two members, if there is one. */
+export function findDirectId(userA: string, userB: string): string | null {
+  const key = [userA, userB].sort().join(':');
+  const row = getDb().prepare('SELECT id FROM conversations WHERE direct_key = ?').get(key) as
+    { id: string } | undefined;
+  return row?.id ?? null;
+}
+
+/**
+ * Returns the direct conversation between two members, creating it on first
+ * use.
+ *
+ * The sorted `direct_key` plus its unique index makes this idempotent at the
+ * database level: if both members click "message" simultaneously, the losing
+ * insert hits the constraint and we fall back to reading the winner's row —
+ * no duplicate thread, no application-level lock.
+ */
+export function findOrCreateDirect(userA: string, userB: string): string {
+  const key = [userA, userB].sort().join(':');
+
+  const existing = getDb().prepare(`SELECT id FROM conversations WHERE direct_key = ?`).get(key) as
+    { id: string } | undefined;
+  if (existing) return existing.id;
+
+  try {
+    return transaction((db) => {
+      const now = Date.now();
+      const id = createId(now);
+
+      db.prepare(
+        `INSERT INTO conversations (
+           id, kind, name, topic, icon, is_private, direct_key, created_by, created_at, updated_at
+         ) VALUES (@id, 'direct', NULL, NULL, NULL, 1, @key, @createdBy, @now, @now)`,
+      ).run({ id, key, createdBy: userA, now });
+
+      const addMember = db.prepare(
+        `INSERT INTO conversation_members (
+           conversation_id, user_id, role, joined_at, last_read_at, is_muted, is_pinned
+         ) VALUES (?, ?, 'member', ?, ?, 0, 0)`,
+      );
+      addMember.run(id, userA, now, now);
+      if (userB !== userA) addMember.run(id, userB, now, 0);
+
+      return id;
+    });
+  } catch (error) {
+    const row = getDb().prepare('SELECT id FROM conversations WHERE direct_key = ?').get(key) as
+      { id: string } | undefined;
+    if (row) return row.id;
+    throw error;
+  }
+}
