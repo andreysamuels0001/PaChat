@@ -394,3 +394,41 @@ export function advanceRead(conversationId: string, userId: string, readAt: numb
   const row = memberRecord(conversationId, userId);
   return row?.last_read_at ?? readAt;
 }
+
+export function updateChannel(
+  conversationId: string,
+  patch: { name?: string; topic?: string | null; icon?: string | null },
+): void {
+  const assignments: string[] = [];
+  const params: Record<string, unknown> = { conversationId, now: Date.now() };
+
+  if (patch.name !== undefined) {
+    assignments.push('name = @name');
+    params.name = patch.name;
+  }
+  if (patch.topic !== undefined) {
+    assignments.push('topic = @topic');
+    params.topic = patch.topic;
+  }
+  if (patch.icon !== undefined) {
+    assignments.push('icon = @icon');
+    params.icon = patch.icon;
+  }
+  if (assignments.length === 0) return;
+
+  assignments.push('updated_at = @now');
+  getDb()
+    .prepare(`UPDATE conversations SET ${assignments.join(', ')} WHERE id = @conversationId`)
+    .run(params);
+}
+
+/** True when a channel with this name already exists (case-insensitive). */
+export function channelNameTaken(name: string): boolean {
+  const row = getDb()
+    .prepare(
+      `SELECT 1 AS hit FROM conversations
+        WHERE kind = 'channel' AND name = ? COLLATE NOCASE`,
+    )
+    .get(name) as { hit: number } | undefined;
+  return Boolean(row);
+}
