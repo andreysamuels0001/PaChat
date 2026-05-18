@@ -350,3 +350,47 @@ export function deleteIfEmpty(conversationId: string): boolean {
     return true;
   });
 }
+
+export function setMemberFlags(
+  conversationId: string,
+  userId: string,
+  flags: { muted?: boolean; pinned?: boolean },
+): void {
+  const assignments: string[] = [];
+  const params: Record<string, unknown> = { conversationId, userId };
+
+  if (flags.muted !== undefined) {
+    assignments.push('is_muted = @muted');
+    params.muted = flags.muted ? 1 : 0;
+  }
+  if (flags.pinned !== undefined) {
+    assignments.push('is_pinned = @pinned');
+    params.pinned = flags.pinned ? 1 : 0;
+  }
+  if (assignments.length === 0) return;
+
+  getDb()
+    .prepare(
+      `UPDATE conversation_members SET ${assignments.join(', ')}
+        WHERE conversation_id = @conversationId AND user_id = @userId`,
+    )
+    .run(params);
+}
+
+/**
+ * Moves a read cursor forward. `MAX` in SQL rather than a read-compare-write
+ * in JS, so an out-of-order ack from a second device can never rewind the
+ * cursor and resurrect already-read messages as unread.
+ */
+export function advanceRead(conversationId: string, userId: string, readAt: number): number {
+  getDb()
+    .prepare(
+      `UPDATE conversation_members
+          SET last_read_at = MAX(last_read_at, @readAt)
+        WHERE conversation_id = @conversationId AND user_id = @userId`,
+    )
+    .run({ conversationId, userId, readAt });
+
+  const row = memberRecord(conversationId, userId);
+  return row?.last_read_at ?? readAt;
+}
