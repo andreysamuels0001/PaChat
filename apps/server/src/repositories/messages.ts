@@ -143,3 +143,87 @@ export function getMessage(id: string): Message | null {
   if (!row) return null;
   return hydrateMessages([row])[0] ?? null;
 }
+
+/* ───────────────────────────────────────────────────────────── creation ────*/
+
+export interface InsertMessageInput {
+  conversationId: string;
+  authorId: string;
+  body: string;
+  kind?: 'text' | 'system';
+  replyToId?: string | null;
+  nonce?: string | null;
+  attachmentIds?: string[];
+}
+
+export interface InsertResult {
+  message: Message;
+  /** True when an existing row was returned because the nonce was a replay. */
+  deduplicated: boolean;
+}
+
+/**
+ * Inserts a message, claims its attachments and bumps the conversation's
+ * `updated_at` — atomically.
+ *
+ * Idempotency: the unique `(author_id, nonce)` index means a client that
+ * retries a send after a flaky reconnect gets the original message back
+ * instead of a duplicate. The check is done inside the transaction, so two
+ * concurrent retries cannot both win.
+ */
+export function insertMessage(input: InsertMessageInput): InsertResult {
+  return transaction((db) => {
+    if (input.nonce) {
+      const existing = db
+        .prepare('SELECT * FROM messages WHERE author_id = ? AND nonce = ?')
+        .get(input.authorId, input.nonce) as MessageRow | undefined;
+      if (existing) {
+        const message = hydrateMessages([existing])[0];
+        if (message) return { message, deduplicated: true };
+      }
+    }
+
+    const now = Date.now();
+    const id = createId(now);
+
+    db.prepare(
+      `INSERT INTO messages (
+         id, conversation_id, author_id, kind, body, reply_to_id, nonce, created_at
+       ) VALUES (@id, @conversationId, @authorId, @kind, @body, @replyToId, @nonce, @now)`,
+    ).run({
+      id,
+      conversationId: input.conversationId,
+      authorId: input.authorId,
+      kind: input.kind ?? 'text',
+      body: input.body,
+      replyToId: input.replyToId ?? null,
+      nonce: input.nonce ?? null,
+      now,
+    });
+
+    const attachmentIds = input.attachmentIds ?? [];
+    if (attachmentIds.length > 0) {
+      // Attachments are uploaded before the message exists, so they start
+      // unowned. Binding requires `message_id IS NULL` and a matching owner,
+      // which stops one member attaching another member's upload.
+      const claim = db.prepare(
+        `UPDATE attachments
+            SET message_id = @messageId
+          WHERE id = @id AND owner_id = @ownerId AND message_id IS NULL`,
+      );
+      for (const attachmentId of attachmentIds) {
+        claim.run({ messageId: id, id: attachmentId, ownerId: input.authorId });
+      }
+    }
+
+    db.prepare('UPDATE conversations SET updated_at = ? WHERE id = ?').run(
+      now,
+      input.conversationId,
+    );
+
+    const row = db.prepare('SELECT * FROM messages WHERE id = ?').get(id) as MessageRow;
+    const message = hydrateMessages([row])[0];
+    if (!message) throw new Error('message vanished immediately after insert');
+    return { message, deduplicated: false };
+  });
+}
