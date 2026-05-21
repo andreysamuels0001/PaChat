@@ -292,3 +292,73 @@ export function toggleReaction(messageId: string, userId: string, emoji: string)
     return row ? (hydrateMessages([row])[0] ?? null) : null;
   });
 }
+
+/* ─────────────────────────────────────────────────────────── retrieval ────*/
+
+export interface HistoryQuery {
+  conversationId: string;
+  /** Return messages strictly older than this id. */
+  before?: string | null;
+  limit?: number;
+}
+
+export interface HistoryResult {
+  messages: Message[];
+  hasMore: boolean;
+}
+
+/**
+ * Keyset pagination over the time-prefixed primary key.
+ *
+ * `WHERE id < ?` is both the filter and the sort, served entirely by the
+ * `(conversation_id, id DESC)` index. Unlike `OFFSET`, the cursor stays
+ * correct while new messages arrive mid-scroll.
+ */
+export function listHistory(query: HistoryQuery): HistoryResult {
+  const limit = Math.min(query.limit ?? LIMITS.messagePageSize, LIMITS.messagePageSizeMax);
+
+  // Fetch one extra row purely to answer "is there more?" without a COUNT.
+  const rows = query.before
+    ? (getDb()
+        .prepare(
+          `SELECT * FROM messages
+            WHERE conversation_id = ? AND id < ?
+            ORDER BY id DESC LIMIT ?`,
+        )
+        .all(query.conversationId, query.before, limit + 1) as MessageRow[])
+    : (getDb()
+        .prepare(
+          `SELECT * FROM messages
+            WHERE conversation_id = ?
+            ORDER BY id DESC LIMIT ?`,
+        )
+        .all(query.conversationId, limit + 1) as MessageRow[]);
+
+  const hasMore = rows.length > limit;
+  const page = hasMore ? rows.slice(0, limit) : rows;
+
+  // Reverse to oldest-first: the renderer prepends pages, and reading order
+  // should match render order.
+  return { messages: hydrateMessages(page.reverse()), hasMore };
+}
+
+export function lastMessageOf(conversationId: string): Message | null {
+  const row = getDb()
+    .prepare('SELECT * FROM messages WHERE conversation_id = ? ORDER BY id DESC LIMIT 1')
+    .get(conversationId) as MessageRow | undefined;
+  return row ? (hydrateMessages([row])[0] ?? null) : null;
+}
+
+/** Newest-message timestamp per conversation, for sidebar ordering. */
+export function lastMessageTimestamps(conversationIds: string[]): Map<string, number> {
+  if (conversationIds.length === 0) return new Map();
+  const rows = getDb()
+    .prepare(
+      `SELECT conversation_id, MAX(created_at) AS newest
+         FROM messages
+        WHERE conversation_id IN (${placeholders(conversationIds.length)})
+        GROUP BY conversation_id`,
+    )
+    .all(...conversationIds) as Array<{ conversation_id: string; newest: number }>;
+  return new Map(rows.map((r) => [r.conversation_id, r.newest]));
+}
