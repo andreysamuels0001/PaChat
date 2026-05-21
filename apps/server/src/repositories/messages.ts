@@ -71,3 +71,75 @@ function buildReplyPreview(parent: MessageRow): ReplyPreview {
     isDeleted: parent.deleted_at !== null,
   };
 }
+
+/** Lifts raw rows into fully populated domain messages, oldest-first. */
+export function hydrateMessages(rows: MessageRow[]): Message[] {
+  if (rows.length === 0) return [];
+  const db = getDb();
+  const ids = rows.map((r) => r.id);
+
+  const reactionRows = db
+    .prepare(
+      `SELECT * FROM reactions
+        WHERE message_id IN (${placeholders(ids.length)})
+        ORDER BY created_at ASC`,
+    )
+    .all(...ids) as ReactionRow[];
+  const reactions = aggregateReactions(reactionRows);
+
+  const attachmentRows = db
+    .prepare(
+      `SELECT * FROM attachments
+        WHERE message_id IN (${placeholders(ids.length)})
+        ORDER BY created_at ASC`,
+    )
+    .all(...ids) as AttachmentRow[];
+
+  const attachments = new Map<string, AttachmentRow[]>();
+  for (const row of attachmentRows) {
+    if (!row.message_id) continue;
+    const list = attachments.get(row.message_id) ?? [];
+    list.push(row);
+    attachments.set(row.message_id, list);
+  }
+
+  const parentIds = [...new Set(rows.map((r) => r.reply_to_id).filter((v): v is string => !!v))];
+  const parents = new Map<string, MessageRow>();
+  if (parentIds.length > 0) {
+    const parentRows = db
+      .prepare(`SELECT * FROM messages WHERE id IN (${placeholders(parentIds.length)})`)
+      .all(...parentIds) as MessageRow[];
+    for (const row of parentRows) parents.set(row.id, row);
+  }
+
+  return rows.map((row) => {
+    const parent = row.reply_to_id ? parents.get(row.reply_to_id) : undefined;
+    return {
+      id: row.id,
+      conversationId: row.conversation_id,
+      authorId: row.author_id,
+      kind: messageKindOf(row),
+      // A tombstoned message keeps its slot in history but loses its content,
+      // so surrounding grouping and read cursors stay correct.
+      body: row.deleted_at ? '' : row.body,
+      attachments: row.deleted_at ? [] : (attachments.get(row.id) ?? []).map(toAttachment),
+      reactions: row.deleted_at ? [] : (reactions.get(row.id) ?? []),
+      replyTo: parent ? buildReplyPreview(parent) : null,
+      createdAt: row.created_at,
+      editedAt: row.edited_at,
+      deletedAt: row.deleted_at,
+    };
+  });
+}
+
+export function findMessageRow(id: string): MessageRow | null {
+  const row = getDb().prepare('SELECT * FROM messages WHERE id = ?').get(id) as
+    MessageRow | undefined;
+  return row ?? null;
+}
+
+export function getMessage(id: string): Message | null {
+  const row = findMessageRow(id);
+  if (!row) return null;
+  return hydrateMessages([row])[0] ?? null;
+}
