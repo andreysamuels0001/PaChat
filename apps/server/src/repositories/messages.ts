@@ -227,3 +227,29 @@ export function insertMessage(input: InsertMessageInput): InsertResult {
     return { message, deduplicated: false };
   });
 }
+
+/* ───────────────────────────────────────────────────────────── mutation ────*/
+
+export function editMessage(id: string, body: string): Message | null {
+  const now = Date.now();
+  getDb()
+    .prepare('UPDATE messages SET body = ?, edited_at = ? WHERE id = ? AND deleted_at IS NULL')
+    .run(body, now, id);
+  return getMessage(id);
+}
+
+/**
+ * Soft-deletes a message: the row survives as a tombstone, while its body,
+ * reactions and attachments are removed. Keeping the row means reply previews
+ * and read cursors that point at it stay resolvable.
+ */
+export function deleteMessage(id: string): Message | null {
+  return transaction((db) => {
+    const now = Date.now();
+    db.prepare(`UPDATE messages SET deleted_at = ?, body = '' WHERE id = ?`).run(now, id);
+    db.prepare('DELETE FROM reactions WHERE message_id = ?').run(id);
+    db.prepare('DELETE FROM attachments WHERE message_id = ?').run(id);
+    const row = db.prepare('SELECT * FROM messages WHERE id = ?').get(id) as MessageRow | undefined;
+    return row ? (hydrateMessages([row])[0] ?? null) : null;
+  });
+}
