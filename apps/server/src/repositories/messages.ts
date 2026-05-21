@@ -253,3 +253,42 @@ export function deleteMessage(id: string): Message | null {
     return row ? (hydrateMessages([row])[0] ?? null) : null;
   });
 }
+
+/**
+ * Toggles one member's reaction. Returns the rehydrated message so the caller
+ * can broadcast a single authoritative state rather than a delta the clients
+ * have to apply in order.
+ */
+export function toggleReaction(messageId: string, userId: string, emoji: string): Message | null {
+  return transaction((db) => {
+    const existing = db
+      .prepare('SELECT 1 AS hit FROM reactions WHERE message_id = ? AND user_id = ? AND emoji = ?')
+      .get(messageId, userId, emoji) as { hit: number } | undefined;
+
+    if (existing) {
+      db.prepare('DELETE FROM reactions WHERE message_id = ? AND user_id = ? AND emoji = ?').run(
+        messageId,
+        userId,
+        emoji,
+      );
+    } else {
+      const distinct = db
+        .prepare('SELECT COUNT(DISTINCT emoji) AS n FROM reactions WHERE message_id = ?')
+        .get(messageId) as { n: number };
+      if (distinct.n >= LIMITS.reactionsPerMessage) {
+        // Silently ignore rather than error: the cap exists to bound payload
+        // size, and a failed toast for a reaction is worse than a no-op.
+        const row = db.prepare('SELECT * FROM messages WHERE id = ?').get(messageId) as
+          MessageRow | undefined;
+        return row ? (hydrateMessages([row])[0] ?? null) : null;
+      }
+      db.prepare(
+        'INSERT INTO reactions (message_id, user_id, emoji, created_at) VALUES (?, ?, ?, ?)',
+      ).run(messageId, userId, emoji, Date.now());
+    }
+
+    const row = db.prepare('SELECT * FROM messages WHERE id = ?').get(messageId) as
+      MessageRow | undefined;
+    return row ? (hydrateMessages([row])[0] ?? null) : null;
+  });
+}
