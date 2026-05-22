@@ -362,3 +362,77 @@ export function lastMessageTimestamps(conversationIds: string[]): Map<string, nu
     .all(...conversationIds) as Array<{ conversation_id: string; newest: number }>;
   return new Map(rows.map((r) => [r.conversation_id, r.newest]));
 }
+
+/* ────────────────────────────────────────────────────────────── search ────*/
+
+/**
+ * Escapes a user query for FTS5. Each whitespace-separated term becomes a
+ * quoted prefix match, which gives incremental "search as you type" behaviour
+ * while making it impossible for a stray quote or operator to be interpreted
+ * as FTS syntax.
+ */
+function toFtsQuery(input: string): string {
+  const terms = input
+    .split(/\s+/)
+    .map((term) => term.replace(/["^*():]/g, '').trim())
+    .filter((term) => term.length > 0);
+  if (terms.length === 0) return '';
+  return terms.map((term) => `"${term}"*`).join(' AND ');
+}
+
+/** Wraps matched terms in `<mark>` over HTML-escaped text. */
+function highlight(body: string, terms: string[]): string {
+  let output = escapeHtml(truncate(body, 240));
+  for (const term of terms) {
+    const safe = term.replace(/[.*+?^${}()|[\]\\]/g, '\\$&');
+    if (!safe) continue;
+    output = output.replace(new RegExp(`(${safe})`, 'gi'), '<mark>$1</mark>');
+  }
+  return output;
+}
+
+export interface SearchQuery {
+  userId: string;
+  query: string;
+  conversationId?: string | null;
+  limit?: number;
+}
+
+/**
+ * Full-text search scoped to the conversations the caller belongs to. The
+ * membership subquery is the authorisation boundary — there is no code path
+ * that can return a message from a channel the viewer is not in.
+ */
+export function searchMessages(query: SearchQuery): SearchHit[] {
+  const match = toFtsQuery(query.query);
+  if (!match) return [];
+
+  const limit = Math.min(query.limit ?? 25, 50);
+  const db = getDb();
+
+  const sql = `
+    SELECT m.*
+      FROM messages_fts f
+      JOIN messages m ON m.rowid = f.rowid
+     WHERE messages_fts MATCH @match
+       AND m.deleted_at IS NULL
+       AND m.conversation_id IN (
+             SELECT conversation_id FROM conversation_members WHERE user_id = @userId
+           )
+       ${query.conversationId ? 'AND m.conversation_id = @conversationId' : ''}
+     ORDER BY bm25(messages_fts) ASC, m.id DESC
+     LIMIT @limit
+  `;
+
+  const params: Record<string, unknown> = { match, userId: query.userId, limit };
+  if (query.conversationId) params.conversationId = query.conversationId;
+
+  const rows = db.prepare(sql).all(params) as MessageRow[];
+  const messages = hydrateMessages(rows);
+  const terms = query.query.split(/\s+/).filter(Boolean);
+
+  return messages.map((message) => ({
+    message,
+    highlight: highlight(message.body, terms),
+  }));
+}
