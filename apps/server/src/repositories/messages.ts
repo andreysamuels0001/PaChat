@@ -436,3 +436,59 @@ export function searchMessages(query: SearchQuery): SearchHit[] {
     highlight: highlight(message.body, terms),
   }));
 }
+
+/* ────────────────────────────────────────────────────────────── unread ────*/
+
+export interface UnreadSummary {
+  count: number;
+  hasMention: boolean;
+}
+
+/**
+ * Counts messages newer than a member's read cursor, and whether any of them
+ * mention them. Authored messages are excluded so your own send never shows
+ * up as unread to you.
+ */
+export function unreadFor(
+  conversationId: string,
+  userId: string,
+  username: string,
+  lastReadAt: number,
+): UnreadSummary {
+  const row = getDb()
+    .prepare(
+      `SELECT
+         COUNT(*) AS count,
+         SUM(
+           CASE WHEN body LIKE '%@' || @username || '%' OR body LIKE '%@everyone%'
+                THEN 1 ELSE 0 END
+         ) AS mentions
+       FROM messages
+      WHERE conversation_id = @conversationId
+        AND created_at > @lastReadAt
+        AND author_id != @userId
+        AND deleted_at IS NULL`,
+    )
+    .get({ conversationId, userId, username, lastReadAt }) as {
+    count: number;
+    mentions: number | null;
+  };
+
+  return { count: row.count, hasMention: (row.mentions ?? 0) > 0 };
+}
+
+/** Deletes attachments uploaded but never attached to a message. */
+export function pruneOrphanAttachments(olderThanMs = 24 * 60 * 60 * 1000): AttachmentRow[] {
+  const cutoff = Date.now() - olderThanMs;
+  return transaction((db) => {
+    const rows = db
+      .prepare('SELECT * FROM attachments WHERE message_id IS NULL AND created_at < ?')
+      .all(cutoff) as AttachmentRow[];
+    if (rows.length > 0) {
+      db.prepare(`DELETE FROM attachments WHERE id IN (${placeholders(rows.length)})`).run(
+        ...rows.map((r) => r.id),
+      );
+    }
+    return rows;
+  });
+}
