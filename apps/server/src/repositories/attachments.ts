@@ -59,3 +59,35 @@ export function findByStorageKey(storageKey: string): AttachmentRow | null {
     AttachmentRow | undefined;
   return row ?? null;
 }
+
+/**
+ * True when `userId` may download the attachment: they either uploaded it, or
+ * they are a member of the conversation whose message carries it.
+ */
+export function canAccessAttachment(row: AttachmentRow, userId: string): boolean {
+  if (row.owner_id === userId) return true;
+  if (!row.message_id) return false;
+
+  const hit = getDb()
+    .prepare(
+      `SELECT 1 AS ok
+         FROM messages m
+         JOIN conversation_members cm ON cm.conversation_id = m.conversation_id
+        WHERE m.id = ? AND cm.user_id = ?`,
+    )
+    .get(row.message_id, userId) as { ok: number } | undefined;
+
+  return Boolean(hit);
+}
+
+export function deleteAttachment(id: string): void {
+  getDb().prepare('DELETE FROM attachments WHERE id = ?').run(id);
+}
+
+/** Total bytes a member has uploaded, for a per-account storage quota. */
+export function bytesUploadedBy(userId: string): number {
+  const row = getDb()
+    .prepare('SELECT COALESCE(SUM(byte_size), 0) AS total FROM attachments WHERE owner_id = ?')
+    .get(userId) as { total: number };
+  return row.total;
+}
