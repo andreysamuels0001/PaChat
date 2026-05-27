@@ -230,3 +230,30 @@ const CHANNELS: SeedChannel[] = [
     ],
   },
 ];
+
+interface SeedDirect {
+  a: string;
+  b: string;
+  messages: SeedMessage[];
+}
+
+const DIRECTS: SeedDirect[] = [
+  {
+    a: 'ada',
+    b: 'grace',
+    messages: [
+      { author: 'grace', body: 'Do you have ten minutes before the review?', ago: 240 },
+      { author: 'ada', body: 'Yes — I will grab a room.', ago: 232 },
+      {
+        author: 'grace',
+        body: 'Perfect. I mostly want to talk through the reconnect story so I can explain it on Thursday.',
+        ago: 228,
+      },
+      {
+        author: 'ada',
+        body: 'Easy. Short version: every send carries a nonce, so retries are idempotent.',
+        ago: 12,
+      },
+    ],
+  },
+];
