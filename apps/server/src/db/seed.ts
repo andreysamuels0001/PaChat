@@ -257,3 +257,207 @@ const DIRECTS: SeedDirect[] = [
     ],
   },
 ];
+
+export async function seedDatabase(): Promise<void> {
+  const db = getDb();
+
+  const existing = db.prepare('SELECT COUNT(*) AS n FROM users').get() as { n: number };
+  if (existing.n > 0) {
+    log.warn('database already contains users — skipping seed', { users: existing.n });
+    return;
+  }
+
+  // Hash once: every demo account shares the same password, and bcrypt at
+  // cost 12 is deliberately slow.
+  const passwordHash = await hashPassword(DEMO_PASSWORD);
+  const now = Date.now();
+  const userIds = new Map<string, string>();
+
+  transaction(() => {
+    const insertUser = db.prepare(`
+      INSERT INTO users (
+        id, email, username, display_name, password_hash, avatar_url, accent_color,
+        title, presence_state, presence_message, last_seen_at, preferences,
+        created_at, updated_at
+      ) VALUES (
+        @id, @email, @username, @displayName, @passwordHash, NULL, @accent,
+        @title, @presence, @statusMessage, @lastSeenAt, @preferences,
+        @createdAt, @updatedAt
+      )
+    `);
+
+    USERS.forEach((user, index) => {
+      const id = createId(now - (USERS.length - index) * DAY);
+      userIds.set(user.key, id);
+      insertUser.run({
+        id,
+        email: user.email,
+        username: user.username,
+        displayName: user.displayName,
+        passwordHash,
+        accent: user.accent,
+        title: user.title,
+        presence: user.presence,
+        statusMessage: user.statusMessage,
+        lastSeenAt: user.presence === 'offline' ? now - 8 * HOUR : now - 2 * MINUTE,
+        preferences: JSON.stringify({ ...DEFAULT_PREFERENCES, accentColor: user.accent }),
+        createdAt: now - (USERS.length - index) * DAY,
+        updatedAt: now,
+      });
+    });
+
+    const idOf = (key: string): string => {
+      const id = userIds.get(key);
+      if (!id) throw new Error(`seed references unknown user "${key}"`);
+      return id;
+    };
+
+    const insertConversation = db.prepare(`
+      INSERT INTO conversations (
+        id, kind, name, topic, icon, is_private, direct_key, created_by, created_at, updated_at
+      ) VALUES (
+        @id, @kind, @name, @topic, @icon, @isPrivate, @directKey, @createdBy, @createdAt, @updatedAt
+      )
+    `);
+
+    const insertMember = db.prepare(`
+      INSERT INTO conversation_members (
+        conversation_id, user_id, role, joined_at, last_read_at, is_muted, is_pinned
+      ) VALUES (@conversationId, @userId, @role, @joinedAt, @lastReadAt, 0, @isPinned)
+    `);
+
+    const insertMessage = db.prepare(`
+      INSERT INTO messages (
+        id, conversation_id, author_id, kind, body, reply_to_id, nonce, created_at
+      ) VALUES (@id, @conversationId, @authorId, 'text', @body, @replyToId, NULL, @createdAt)
+    `);
+
+    const insertReaction = db.prepare(`
+      INSERT INTO reactions (message_id, user_id, emoji, created_at)
+      VALUES (@messageId, @userId, @emoji, @createdAt)
+    `);
+
+    const touchConversation = db.prepare('UPDATE conversations SET updated_at = ? WHERE id = ?');
+    const markRead = db.prepare(
+      'UPDATE conversation_members SET last_read_at = ? WHERE conversation_id = ? AND user_id = ?',
+    );
+
+    /** Writes a message list and returns the created ids, in order. */
+    const writeMessages = (conversationId: string, messages: SeedMessage[]): string[] => {
+      const ids: string[] = [];
+      let newest = 0;
+
+      messages.forEach((message) => {
+        const createdAt = now - message.ago * MINUTE;
+        const id = createId(createdAt);
+        ids.push(id);
+        newest = Math.max(newest, createdAt);
+        insertMessage.run({
+          id,
+          conversationId,
+          authorId: idOf(message.author),
+          body: message.body,
+          replyToId: message.replyTo !== undefined ? (ids[message.replyTo] ?? null) : null,
+          createdAt,
+        });
+        for (const reaction of message.reactions ?? []) {
+          for (const who of reaction.by) {
+            insertReaction.run({
+              messageId: id,
+              userId: idOf(who),
+              emoji: reaction.emoji,
+              createdAt: createdAt + MINUTE,
+            });
+          }
+        }
+      });
+
+      if (newest > 0) touchConversation.run(newest, conversationId);
+      return ids;
+    };
+
+    // ── Channels ──────────────────────────────────────────────────────────
+    for (const channel of CHANNELS) {
+      const createdAt = now - 10 * DAY;
+      const conversationId = createId(createdAt);
+
+      insertConversation.run({
+        id: conversationId,
+        kind: 'channel',
+        name: channel.name,
+        topic: channel.topic,
+        icon: channel.icon,
+        isPrivate: channel.isPrivate ? 1 : 0,
+        directKey: null,
+        createdBy: idOf(channel.owner),
+        createdAt,
+        updatedAt: createdAt,
+      });
+
+      for (const member of channel.members) {
+        insertMember.run({
+          conversationId,
+          userId: idOf(member),
+          role: member === channel.owner ? 'owner' : 'member',
+          joinedAt: createdAt,
+          // Everyone is caught up except Ada in #general, so the very first
+          // render shows a real unread badge rather than an empty state.
+          lastReadAt: member === 'ada' && channel.key === 'general' ? now - 2 * HOUR : now,
+          isPinned: channel.key === 'general' ? 1 : 0,
+        });
+      }
+
+      writeMessages(conversationId, channel.messages);
+    }
+
+    // ── Direct messages ───────────────────────────────────────────────────
+    for (const direct of DIRECTS) {
+      const createdAt = now - 5 * DAY;
+      const conversationId = createId(createdAt);
+      const pair = [idOf(direct.a), idOf(direct.b)].sort();
+
+      insertConversation.run({
+        id: conversationId,
+        kind: 'direct',
+        name: null,
+        topic: null,
+        icon: null,
+        isPrivate: 1,
+        directKey: pair.join(':'),
+        createdBy: idOf(direct.a),
+        createdAt,
+        updatedAt: createdAt,
+      });
+
+      for (const member of [direct.a, direct.b]) {
+        insertMember.run({
+          conversationId,
+          userId: idOf(member),
+          role: 'member',
+          joinedAt: createdAt,
+          lastReadAt: now,
+          isPinned: 0,
+        });
+      }
+
+      const ids = writeMessages(conversationId, direct.messages);
+      // Leave the final inbound line unread for Grace.
+      const last = ids[ids.length - 1];
+      if (last) markRead.run(now - 30 * MINUTE, conversationId, idOf('grace'));
+    }
+  });
+
+  const counts = db
+    .prepare(
+      `SELECT
+         (SELECT COUNT(*) FROM users)         AS users,
+         (SELECT COUNT(*) FROM conversations) AS conversations,
+         (SELECT COUNT(*) FROM messages)      AS messages,
+         (SELECT COUNT(*) FROM reactions)     AS reactions`,
+    )
+    .get() as Record<string, number>;
+
+  log.info('demo workspace seeded', counts);
+  log.info(`sign in with any of: ${USERS.map((u) => u.email).join(', ')}`);
+  log.info(`password: ${DEMO_PASSWORD}`);
+}
