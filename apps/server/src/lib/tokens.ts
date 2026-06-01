@@ -57,3 +57,28 @@ export function verifyAccessToken(token: string): AccessClaims {
     throw error;
   }
 }
+
+/**
+ * Mints a refresh token. The caller persists only `digest`; the raw value is
+ * handed to the client once and never stored server-side.
+ */
+export function createRefreshToken(): { token: string; digest: string; expiresAt: number } {
+  const token = randomBytes(48).toString('base64url');
+  return {
+    token,
+    digest: digestRefreshToken(token),
+    expiresAt: Date.now() + TIMINGS.refreshTokenTtlMs,
+  };
+}
+
+export function digestRefreshToken(token: string): string {
+  return createHash('sha256').update(token).digest('hex');
+}
+
+/** Reads a bearer token out of an `Authorization` header value. */
+export function bearerFrom(header: string | undefined): string | null {
+  if (!header) return null;
+  const [scheme, value] = header.split(' ');
+  if (!value || scheme?.toLowerCase() !== 'bearer') return null;
+  return value.trim() || null;
+}
