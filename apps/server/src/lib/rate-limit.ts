@@ -46,3 +46,52 @@ export class FixedWindowLimiter {
     }
   }
 }
+
+interface Bucket {
+  tokens: number;
+  updatedAt: number;
+}
+
+/**
+ * Smooths bursty socket traffic: a member may fire `capacity` events at once,
+ * then settles to `refillPerSecond`. Used for message sends and reactions so
+ * one runaway client cannot saturate the fan-out loop.
+ */
+export class TokenBucketLimiter {
+  private readonly buckets = new Map<string, Bucket>();
+
+  constructor(
+    private readonly capacity: number,
+    private readonly refillPerSecond: number,
+  ) {
+    const timer = setInterval(() => this.sweep(), 60_000);
+    timer.unref?.();
+  }
+
+  /** Consumes one token. Returns `true` when the action may proceed. */
+  tryConsume(key: string, now: number = Date.now()): boolean {
+    const bucket = this.buckets.get(key) ?? { tokens: this.capacity, updatedAt: now };
+    const elapsedSeconds = (now - bucket.updatedAt) / 1000;
+    bucket.tokens = Math.min(this.capacity, bucket.tokens + elapsedSeconds * this.refillPerSecond);
+    bucket.updatedAt = now;
+
+    if (bucket.tokens < 1) {
+      this.buckets.set(key, bucket);
+      return false;
+    }
+    bucket.tokens -= 1;
+    this.buckets.set(key, bucket);
+    return true;
+  }
+
+  forget(key: string): void {
+    this.buckets.delete(key);
+  }
+
+  private sweep(now: number = Date.now()): void {
+    for (const [key, bucket] of this.buckets) {
+      const full = bucket.tokens >= this.capacity;
+      if (full && now - bucket.updatedAt > 300_000) this.buckets.delete(key);
+    }
+  }
+}
