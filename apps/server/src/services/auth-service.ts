@@ -1,0 +1,99 @@
+import {
+  accentFor,
+  type AuthResponse,
+  type LoginInput,
+  type RegisterInput,
+  type Self,
+  type TokenPair,
+} from '@pachat/shared';
+import { env } from '../config/env.js';
+import { conflict, forbidden, unauthorized } from '../lib/errors.js';
+import { DECOY_HASH, hashPassword, verifyPassword } from '../lib/password.js';
+import {
+  createRefreshToken,
+  digestRefreshToken,
+  signAccessToken,
+  verifyAccessToken,
+  type AccessClaims,
+} from '../lib/tokens.js';
+import { createLogger } from '../lib/logger.js';
+import { toSelf } from '../repositories/rows.js';
+import * as sessions from '../repositories/sessions.js';
+import * as users from '../repositories/users.js';
+
+const log = createLogger('auth');
+
+export interface DeviceContext {
+  userAgent?: string | null;
+  ip?: string | null;
+}
+
+function issueTokens(user: { id: string; username: string }, device: DeviceContext): TokenPair {
+  const refresh = createRefreshToken();
+  const session = sessions.createSession({
+    userId: user.id,
+    refreshTokenHash: refresh.digest,
+    expiresAt: refresh.expiresAt,
+    userAgent: device.userAgent ?? null,
+    ip: device.ip ?? null,
+  });
+
+  const access = signAccessToken({ sub: user.id, sid: session.id, username: user.username });
+
+  return {
+    accessToken: access.token,
+    refreshToken: refresh.token,
+    accessExpiresAt: access.expiresAt,
+  };
+}
+
+/* ─────────────────────────────────────────────────────────── registration ──*/
+
+export async function register(input: RegisterInput, device: DeviceContext): Promise<AuthResponse> {
+  if (!env.ALLOW_REGISTRATION) {
+    throw forbidden('Registration is disabled on this server');
+  }
+
+  if (users.findUserByEmail(input.email)) {
+    throw conflict('That email address is already registered', {
+      email: 'Already registered',
+    });
+  }
+  if (users.findUserByUsername(input.username)) {
+    throw conflict('That username is taken', { username: 'Already taken' });
+  }
+
+  const row = users.createUser({
+    email: input.email,
+    username: input.username,
+    displayName: input.displayName,
+    passwordHash: await hashPassword(input.password),
+    // A deterministic colour from the username means a new account looks
+    // intentional on first render rather than defaulting to everyone's indigo.
+    accentColor: input.accentColor ?? accentFor(input.username),
+  });
+
+  log.info('account created', { userId: row.id, username: row.username });
+
+  return { self: toSelf(row), tokens: issueTokens(row, device) };
+}
+
+/* ────────────────────────────────────────────────────────────────── login ──*/
+
+export async function login(input: LoginInput, device: DeviceContext): Promise<AuthResponse> {
+  const row = users.findUserByIdentifier(input.identifier);
+
+  // Hash against a decoy when the account does not exist so that a wrong
+  // address and a wrong password take the same time. Without this, response
+  // latency alone enumerates registered members.
+  const matches = await verifyPassword(input.password, row?.password_hash ?? DECOY_HASH);
+
+  if (!row || !matches) {
+    log.warn('failed sign-in', { identifier: input.identifier, ip: device.ip ?? undefined });
+    throw unauthorized('Those credentials do not match an account');
+  }
+
+  log.info('signed in', { userId: row.id, username: row.username });
+
+  return { self: toSelf(row), tokens: issueTokens(row, device) };
+}
