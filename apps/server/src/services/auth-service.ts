@@ -97,3 +97,48 @@ export async function login(input: LoginInput, device: DeviceContext): Promise<A
 
   return { self: toSelf(row), tokens: issueTokens(row, device) };
 }
+
+/* ──────────────────────────────────────────────────────────────── refresh ──*/
+
+/**
+ * Exchanges a refresh token for a new pair, rotating the stored digest.
+ *
+ * Rotation is what bounds the damage of a stolen refresh token: the next use
+ * by either party invalidates the other's copy, so a theft surfaces as an
+ * unexpected sign-out rather than silent indefinite access.
+ */
+export function refresh(refreshToken: string): AuthResponse {
+  const digest = digestRefreshToken(refreshToken);
+  const session = sessions.findLiveSessionByDigest(digest);
+  if (!session) throw unauthorized('Your session has expired — sign in again');
+
+  const row = users.findUserById(session.user_id);
+  if (!row) {
+    sessions.revokeSession(session.id);
+    throw unauthorized('Account no longer exists');
+  }
+
+  const next = createRefreshToken();
+  sessions.rotateSession(session.id, next.digest, next.expiresAt);
+
+  const access = signAccessToken({ sub: row.id, sid: session.id, username: row.username });
+
+  return {
+    self: toSelf(row),
+    tokens: {
+      accessToken: access.token,
+      refreshToken: next.token,
+      accessExpiresAt: access.expiresAt,
+    },
+  };
+}
+
+/* ───────────────────────────────────────────────────────────────── logout ──*/
+
+export function logout(refreshToken: string): void {
+  const session = sessions.findLiveSessionByDigest(digestRefreshToken(refreshToken));
+  if (session) {
+    sessions.revokeSession(session.id);
+    log.info('signed out', { userId: session.user_id, sessionId: session.id });
+  }
+}
