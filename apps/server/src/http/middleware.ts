@@ -53,3 +53,38 @@ function queryToken(req: Request): string | null {
   const value = req.query.token;
   return typeof value === 'string' && value.length > 0 ? value : null;
 }
+
+/** Parses and replaces `req.body` with the schema's validated output. */
+export function validateBody<T>(schema: ZodSchema<T>): RequestHandler {
+  return (req, _res, next) => {
+    try {
+      req.body = schema.parse(req.body);
+      next();
+    } catch (error) {
+      if (error instanceof ZodError) {
+        next(
+          new AppError('VALIDATION_FAILED', 'Some fields need attention', {
+            fields: fieldsFromZod(error),
+          }),
+        );
+        return;
+      }
+      next(error);
+    }
+  };
+}
+
+/** Per-IP fixed-window limiter, used to blunt credential stuffing. */
+export function rateLimit(limit: number = env.AUTH_RATE_LIMIT, windowMs = 60_000): RequestHandler {
+  const limiter = new FixedWindowLimiter(limit, windowMs);
+  return (req, res, next) => {
+    const key = req.ip ?? 'unknown';
+    const retryAfterMs = limiter.check(key);
+    if (retryAfterMs === null) {
+      next();
+      return;
+    }
+    res.setHeader('Retry-After', Math.ceil(retryAfterMs / 1000));
+    next(new AppError('RATE_LIMITED', 'Too many attempts — try again shortly'));
+  };
+}
