@@ -88,3 +88,55 @@ export function rateLimit(limit: number = env.AUTH_RATE_LIMIT, windowMs = 60_000
     next(new AppError('RATE_LIMITED', 'Too many attempts — try again shortly'));
   };
 }
+
+/** Logs method, path, status and duration for every request. */
+export const requestLogger: RequestHandler = (req, res, next) => {
+  const startedAt = process.hrtime.bigint();
+  res.on('finish', () => {
+    const ms = Number(process.hrtime.bigint() - startedAt) / 1e6;
+    const fields = {
+      status: res.statusCode,
+      ms: Math.round(ms * 10) / 10,
+      ...(req.principal ? { user: req.principal.username } : {}),
+    };
+    const message = `${req.method} ${req.originalUrl}`;
+    if (res.statusCode >= 500) log.error(message, fields);
+    else if (res.statusCode >= 400) log.warn(message, fields);
+    else log.debug(message, fields);
+  });
+  next();
+};
+
+/** 404 for any unmatched route, in the same envelope as every other error. */
+export const notFoundHandler: RequestHandler = (_req, _res, next) => {
+  next(new AppError('NOT_FOUND', 'No such endpoint'));
+};
+
+/**
+ * The terminal error handler. Normalises anything thrown anywhere in the stack
+ * into the single `{ error: { code, message, fields? } }` envelope that the
+ * client already knows how to render.
+ */
+export function errorHandler(
+  error: unknown,
+  req: Request,
+  res: Response,
+  next: NextFunction,
+): void {
+  if (res.headersSent) {
+    next(error);
+    return;
+  }
+
+  const appError = toAppError(error);
+
+  if (appError.isInternal) {
+    log.error('unhandled request failure', {
+      err: error,
+      method: req.method,
+      path: req.originalUrl,
+    });
+  }
+
+  res.status(appError.status).json({ error: publicShape(appError) });
+}
