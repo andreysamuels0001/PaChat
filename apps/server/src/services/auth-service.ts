@@ -142,3 +142,37 @@ export function logout(refreshToken: string): void {
     log.info('signed out', { userId: session.user_id, sessionId: session.id });
   }
 }
+
+/* ─────────────────────────────────────────────────────────── verification ──*/
+
+export interface Principal {
+  userId: string;
+  username: string;
+  sessionId: string;
+}
+
+/**
+ * Validates an access token and confirms its session is still live.
+ *
+ * The session check is the reason logout takes effect immediately rather than
+ * at token expiry: a revoked device presenting a still-valid JWT is rejected
+ * here.
+ */
+export function authenticate(accessToken: string): Principal {
+  const claims: AccessClaims = verifyAccessToken(accessToken);
+
+  if (!sessions.isSessionLive(claims.sid)) {
+    throw unauthorized('This session was signed out');
+  }
+  if (!users.findUserById(claims.sub)) {
+    throw unauthorized('Account no longer exists');
+  }
+
+  return { userId: claims.sub, username: claims.username, sessionId: claims.sid };
+}
+
+export function selfFor(userId: string): Self {
+  const self = users.getSelf(userId);
+  if (!self) throw unauthorized('Account no longer exists');
+  return self;
+}
