@@ -53,3 +53,40 @@ function requireConversation(conversationId: string, viewer: Viewer): Conversati
   if (!conversation) throw notFound('That conversation does not exist');
   return conversation;
 }
+
+/* ─────────────────────────────────────────────────────────────── bootstrap ─*/
+
+/**
+ * Builds the one-shot payload sent immediately after a successful handshake.
+ *
+ * Everything the first screen needs arrives in a single frame: the viewer, all
+ * their conversations with unread state and last-message previews, and every
+ * member they can see. No launch-time request waterfall.
+ */
+export function bootstrap(viewer: Viewer): SessionReady {
+  return {
+    self: selfFor(viewer.id),
+    conversations: conversations.listForViewer(viewer),
+    users: users.listVisibleUsers(viewer.id),
+    serverTime: Date.now(),
+    protocolVersion: PROTOCOL_VERSION,
+  };
+}
+
+/* ───────────────────────────────────────────────────────────────── history ─*/
+
+export function openConversation(viewer: Viewer, conversationId: string): HistoryPage {
+  assertMember(conversationId, viewer);
+  const { messages: page, hasMore } = messages.listHistory({ conversationId });
+  return { conversationId, messages: page, hasMore };
+}
+
+export function fetchHistory(viewer: Viewer, input: FetchHistoryInput): HistoryPage {
+  assertMember(input.conversationId, viewer);
+  const { messages: page, hasMore } = messages.listHistory({
+    conversationId: input.conversationId,
+    before: input.before ?? null,
+    limit: input.limit ?? LIMITS.messagePageSize,
+  });
+  return { conversationId: input.conversationId, messages: page, hasMore };
+}
