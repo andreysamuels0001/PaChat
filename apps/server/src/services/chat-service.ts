@@ -90,3 +90,58 @@ export function fetchHistory(viewer: Viewer, input: FetchHistoryInput): HistoryP
   });
   return { conversationId: input.conversationId, messages: page, hasMore };
 }
+
+/* ──────────────────────────────────────────────────────────────── messages ─*/
+
+export interface SendResult {
+  message: Message;
+  /** Members who should receive the push, i.e. everyone in the conversation. */
+  recipientIds: string[];
+  /** True when the nonce matched an existing row — do not re-broadcast. */
+  deduplicated: boolean;
+}
+
+export function sendMessage(viewer: Viewer, input: SendMessageInput): SendResult {
+  assertMember(input.conversationId, viewer);
+
+  const body = input.body.trim();
+  const attachmentIds = input.attachmentIds ?? [];
+
+  if (body.length === 0 && attachmentIds.length === 0) {
+    throw validationFailed('A message needs text or an attachment', { body: 'Cannot be empty' });
+  }
+
+  if (input.replyToId) {
+    const parent = messages.findMessageRow(input.replyToId);
+    // A reply must point into the same conversation, otherwise a crafted
+    // payload could quote a message from a channel the viewer cannot see.
+    if (!parent || parent.conversation_id !== input.conversationId) {
+      throw validationFailed('You can only reply to a message in this conversation', {
+        replyToId: 'Not in this conversation',
+      });
+    }
+  }
+
+  const result = messages.insertMessage({
+    conversationId: input.conversationId,
+    authorId: viewer.id,
+    body,
+    replyToId: input.replyToId ?? null,
+    nonce: input.nonce,
+    attachmentIds,
+  });
+
+  if (result.deduplicated) {
+    log.debug('duplicate send suppressed', { nonce: input.nonce, userId: viewer.id });
+  }
+
+  // Sending is an implicit read: the author has obviously seen their own
+  // message, so advance their cursor rather than showing it back as unread.
+  conversations.advanceRead(input.conversationId, viewer.id, result.message.createdAt);
+
+  return {
+    message: result.message,
+    recipientIds: conversations.memberIdsOf(input.conversationId),
+    deduplicated: result.deduplicated,
+  };
+}
