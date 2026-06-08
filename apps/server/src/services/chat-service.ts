@@ -145,3 +145,68 @@ export function sendMessage(viewer: Viewer, input: SendMessageInput): SendResult
     deduplicated: result.deduplicated,
   };
 }
+
+export interface MutationResult {
+  message: Message;
+  recipientIds: string[];
+}
+
+export function editMessage(viewer: Viewer, input: EditMessageInput): MutationResult {
+  const row = messages.findMessageRow(input.messageId);
+  if (!row) throw notFound('That message no longer exists');
+  assertMember(row.conversation_id, viewer);
+
+  if (row.author_id !== viewer.id) throw forbidden('You can only edit your own messages');
+  if (row.deleted_at) throw conflict('That message was deleted');
+  if (row.kind !== 'text') throw forbidden('System messages cannot be edited');
+  if (Date.now() - row.created_at > TIMINGS.messageEditWindowMs) {
+    throw forbidden('Messages can only be edited within 24 hours of sending');
+  }
+
+  const body = input.body.trim();
+  if (body.length === 0) {
+    throw validationFailed('An edited message cannot be empty', { body: 'Cannot be empty' });
+  }
+
+  const message = messages.editMessage(input.messageId, body);
+  if (!message) throw notFound('That message no longer exists');
+
+  return { message, recipientIds: conversations.memberIdsOf(row.conversation_id) };
+}
+
+export function deleteMessage(viewer: Viewer, input: DeleteMessageInput): MutationResult {
+  const row = messages.findMessageRow(input.messageId);
+  if (!row) throw notFound('That message no longer exists');
+  assertMember(row.conversation_id, viewer);
+
+  // Authors delete their own messages; channel owners and admins may remove
+  // anyone's, which is what makes moderation possible without a separate role
+  // system.
+  const member = conversations.memberRecord(row.conversation_id, viewer.id);
+  const isModerator = member?.role === 'owner' || member?.role === 'admin';
+  if (row.author_id !== viewer.id && !isModerator) {
+    throw forbidden('You can only delete your own messages');
+  }
+
+  // Deleting twice is a no-op rather than an error: two clients racing on the
+  // same message should both land on the same final state.
+  const message = row.deleted_at
+    ? messages.getMessage(input.messageId)
+    : messages.deleteMessage(input.messageId);
+  if (!message) throw notFound('That message no longer exists');
+
+  log.debug('message deleted', { messageId: input.messageId, by: viewer.id });
+  return { message, recipientIds: conversations.memberIdsOf(row.conversation_id) };
+}
+
+export function react(viewer: Viewer, input: ReactInput): MutationResult {
+  const row = messages.findMessageRow(input.messageId);
+  if (!row) throw notFound('That message no longer exists');
+  assertMember(row.conversation_id, viewer);
+  if (row.deleted_at) throw conflict('That message was deleted');
+
+  const message = messages.toggleReaction(input.messageId, viewer.id, input.emoji);
+  if (!message) throw notFound('That message no longer exists');
+
+  return { message, recipientIds: conversations.memberIdsOf(row.conversation_id) };
+}
