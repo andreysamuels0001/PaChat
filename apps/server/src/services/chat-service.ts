@@ -210,3 +210,86 @@ export function react(viewer: Viewer, input: ReactInput): MutationResult {
 
   return { message, recipientIds: conversations.memberIdsOf(row.conversation_id) };
 }
+
+/* ─────────────────────────────────────────────────────────── conversations ─*/
+
+export interface ConversationResult {
+  conversation: Conversation;
+  /** Members who must be told the conversation exists / changed. */
+  recipientIds: string[];
+  /** True when the conversation was created by this call. */
+  created: boolean;
+}
+
+export function createChannel(viewer: Viewer, input: CreateChannelInput): ConversationResult {
+  const name = input.name.trim().toLowerCase().replace(/\s+/g, '-');
+
+  if (name.length === 0) {
+    throw validationFailed('A channel needs a name', { name: 'Cannot be empty' });
+  }
+  if (conversations.channelNameTaken(name)) {
+    throw conflict(`#${name} already exists`, { name: 'Already taken' });
+  }
+
+  // Filter to real accounts so a bad id cannot create a membership row
+  // pointing at nothing.
+  const memberIds = [...new Set(input.memberIds ?? [])].filter(
+    (id) => id !== viewer.id && users.findUserById(id) !== null,
+  );
+
+  const conversationId = conversations.createChannel({
+    name,
+    topic: input.topic ?? null,
+    icon: input.icon ?? null,
+    isPrivate: input.isPrivate ?? false,
+    createdBy: viewer.id,
+    memberIds,
+  });
+
+  // A system message gives the channel a visible origin instead of opening on
+  // a blank screen.
+  messages.insertMessage({
+    conversationId,
+    authorId: viewer.id,
+    kind: 'system',
+    body: `created #${name}`,
+  });
+
+  log.info('channel created', { conversationId, name, by: viewer.id });
+
+  return {
+    conversation: requireConversation(conversationId, viewer),
+    recipientIds: [viewer.id, ...memberIds],
+    created: true,
+  };
+}
+
+export function openDirect(viewer: Viewer, peerId: string): ConversationResult {
+  if (peerId === viewer.id) {
+    throw validationFailed('You cannot open a direct message with yourself', {
+      userId: 'Pick someone else',
+    });
+  }
+  if (!users.findUserById(peerId)) throw notFound('That member does not exist');
+
+  const existing = conversations.findDirectId(viewer.id, peerId);
+  const conversationId = existing ?? conversations.findOrCreateDirect(viewer.id, peerId);
+
+  return {
+    conversation: requireConversation(conversationId, viewer),
+    recipientIds: [viewer.id, peerId],
+    created: existing === null,
+  };
+}
+
+export function setConversationFlags(
+  viewer: Viewer,
+  input: ToggleConversationFlagInput,
+): Conversation {
+  assertMember(input.conversationId, viewer);
+  const flags: { muted?: boolean; pinned?: boolean } = {};
+  if (input.muted !== undefined) flags.muted = input.muted;
+  if (input.pinned !== undefined) flags.pinned = input.pinned;
+  conversations.setMemberFlags(input.conversationId, viewer.id, flags);
+  return requireConversation(input.conversationId, viewer);
+}
