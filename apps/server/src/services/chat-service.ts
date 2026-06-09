@@ -351,3 +351,16 @@ export function search(viewer: Viewer, input: SearchInput): SearchHit[] {
     limit: input.limit ?? 25,
   });
 }
+
+/* ─────────────────────────────────────────────────────────────── rooms ────*/
+
+/** Socket.IO room name for a conversation. */
+export const roomFor = (conversationId: string): string => `conversation:${conversationId}`;
+
+/** Socket.IO room name carrying all of one member's devices. */
+export const userRoom = (userId: string): string => `user:${userId}`;
+
+export const roomsForViewer = (viewer: Viewer): string[] => [
+  userRoom(viewer.id),
+  ...conversations.conversationIdsFor(viewer.id).map(roomFor),
+];
