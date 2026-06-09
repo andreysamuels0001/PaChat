@@ -293,3 +293,61 @@ export function setConversationFlags(
   conversations.setMemberFlags(input.conversationId, viewer.id, flags);
   return requireConversation(input.conversationId, viewer);
 }
+
+export interface LeaveResult {
+  conversationId: string;
+  /** Remaining members, who need the updated member list. */
+  recipientIds: string[];
+  systemMessage: Message | null;
+}
+
+export function leaveConversation(viewer: Viewer, conversationId: string): LeaveResult {
+  assertMember(conversationId, viewer);
+
+  const row = conversations.findConversationRow(conversationId);
+  if (row?.kind === 'direct') {
+    throw forbidden('Direct messages cannot be left — mute it instead');
+  }
+
+  const systemMessage = messages.insertMessage({
+    conversationId,
+    authorId: viewer.id,
+    kind: 'system',
+    body: 'left the channel',
+  }).message;
+
+  conversations.removeMember(conversationId, viewer.id);
+  const remaining = conversations.memberIdsOf(conversationId);
+
+  // An empty channel is dead weight — and the system message above would be
+  // its only content.
+  if (remaining.length === 0) conversations.deleteIfEmpty(conversationId);
+
+  return { conversationId, recipientIds: remaining, systemMessage };
+}
+
+/* ────────────────────────────────────────────────────────────────── reads ──*/
+
+export function advanceRead(viewer: Viewer, input: AdvanceReadInput): ReadReceipt {
+  assertMember(input.conversationId, viewer);
+  const lastReadAt = conversations.advanceRead(
+    input.conversationId,
+    viewer.id,
+    // Never accept a cursor from the future: a client with a skewed clock
+    // would otherwise mark messages it has not received as read.
+    Math.min(input.readAt, Date.now()),
+  );
+  return { conversationId: input.conversationId, userId: viewer.id, lastReadAt };
+}
+
+/* ───────────────────────────────────────────────────────────────── search ──*/
+
+export function search(viewer: Viewer, input: SearchInput): SearchHit[] {
+  if (input.conversationId) assertMember(input.conversationId, viewer);
+  return messages.searchMessages({
+    userId: viewer.id,
+    query: input.query,
+    conversationId: input.conversationId ?? null,
+    limit: input.limit ?? 25,
+  });
+}
