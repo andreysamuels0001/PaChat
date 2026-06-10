@@ -49,3 +49,59 @@ function publish(userId: string): void {
     }
   }
 }
+
+/** Registers a newly authenticated socket and brings the member online. */
+export function attach(userId: string, socketId: string): void {
+  let entry = entries.get(userId);
+  if (!entry) {
+    entry = { sockets: new Set(), declared: 'online', offlineTimer: null };
+    entries.set(userId, entry);
+  }
+
+  entry.sockets.add(socketId);
+
+  if (entry.offlineTimer) {
+    clearTimeout(entry.offlineTimer);
+    entry.offlineTimer = null;
+  }
+
+  const row = users.findUserById(userId);
+  // Honour a sticky "busy"/"away" the member set earlier; only promote from
+  // offline, so reconnecting does not silently reset a do-not-disturb state.
+  const next =
+    row && row.presence_state !== 'offline'
+      ? (row.presence_state as Entry['declared'])
+      : entry.declared;
+  entry.declared = next;
+
+  users.setPresence(userId, next);
+  publish(userId);
+  log.debug('socket attached', { userId, sockets: entry.sockets.size });
+}
+
+/** Deregisters a socket; schedules the offline transition if it was the last. */
+export function detach(userId: string, socketId: string): void {
+  const entry = entries.get(userId);
+  if (!entry) return;
+
+  entry.sockets.delete(socketId);
+  users.touchLastSeen(userId);
+
+  if (entry.sockets.size > 0) {
+    log.debug('socket detached', { userId, remaining: entry.sockets.size });
+    return;
+  }
+
+  entry.offlineTimer = setTimeout(() => {
+    const current = entries.get(userId);
+    // Re-check: a reconnect inside the grace window must cancel the
+    // transition, and the timer may have been scheduled before it arrived.
+    if (!current || current.sockets.size > 0) return;
+    users.setPresence(userId, 'offline');
+    entries.delete(userId);
+    publish(userId);
+    log.debug('went offline', { userId });
+  }, TIMINGS.presenceGraceMs);
+
+  entry.offlineTimer.unref?.();
+}
