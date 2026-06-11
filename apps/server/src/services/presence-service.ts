@@ -105,3 +105,37 @@ export function detach(userId: string, socketId: string): void {
 
   entry.offlineTimer.unref?.();
 }
+
+/** Applies a member's explicit presence choice. */
+export function declare(
+  userId: string,
+  state: Exclude<PresenceState, 'offline'>,
+  message?: string | null,
+): void {
+  const entry = entries.get(userId);
+  if (entry) entry.declared = state;
+  users.setPresence(userId, state, message);
+  publish(userId);
+}
+
+export function isOnline(userId: string): boolean {
+  return (entries.get(userId)?.sockets.size ?? 0) > 0;
+}
+
+export function onlineUserIds(): string[] {
+  return [...entries.entries()].filter(([, e]) => e.sockets.size > 0).map(([id]) => id);
+}
+
+export function connectionCount(): number {
+  let total = 0;
+  for (const entry of entries.values()) total += entry.sockets.size;
+  return total;
+}
+
+/** Clears the registry — used on shutdown and in tests. */
+export function reset(): void {
+  for (const entry of entries.values()) {
+    if (entry.offlineTimer) clearTimeout(entry.offlineTimer);
+  }
+  entries.clear();
+}
