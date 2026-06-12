@@ -68,3 +68,42 @@ type PaChatNamespace = Namespace<
 const sendLimiter = new TokenBucketLimiter(10, 3);
 const reactionLimiter = new TokenBucketLimiter(25, 8);
 const typingLimiter = new TokenBucketLimiter(20, 5);
+
+/**
+ * Wraps a handler so that nothing can escape it uncaught.
+ *
+ * Every client→server event answers through an acknowledgement, so a failure
+ * is delivered as data rather than as an exception that would tear down the
+ * connection and lose every other subscription on it.
+ */
+async function respond<T>(
+  ack: Ack<T> | undefined,
+  context: { socket: PaChatSocket; event: string },
+  work: () => T | Promise<T>,
+): Promise<void> {
+  try {
+    const data = await work();
+    ack?.(ok(data));
+  } catch (error) {
+    const appError = error instanceof ZodError ? toAppError(error) : toAppError(error);
+    if (appError.isInternal) {
+      log.error('handler failed', {
+        err: error,
+        event: context.event,
+        user: context.socket.data.username,
+      });
+    } else {
+      log.debug('handler rejected', {
+        event: context.event,
+        code: appError.code,
+        message: appError.message,
+      });
+    }
+    ack?.({ ok: false, error: publicShape(appError) });
+  }
+}
+
+const viewerOf = (socket: PaChatSocket): chat.Viewer => ({
+  id: socket.data.userId,
+  username: socket.data.username,
+});
