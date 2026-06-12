@@ -78,3 +78,30 @@ export function activeIn(conversationId: string, now = Date.now()): string[] {
   sweep(conversationId, now);
   return [...(typing.get(conversationId)?.keys() ?? [])];
 }
+
+/**
+ * A single interval that expires indicators the clients would otherwise keep
+ * rendering — one timer for the whole process rather than one per keystroke.
+ */
+let janitor: NodeJS.Timeout | null = null;
+
+export function startJanitor(intervalMs = 1_000): void {
+  if (janitor) return;
+  janitor = setInterval(() => {
+    const now = Date.now();
+    for (const conversationId of [...typing.keys()]) {
+      if (sweep(conversationId, now)) emit(conversationId);
+    }
+  }, intervalMs);
+  janitor.unref?.();
+}
+
+export function stopJanitor(): void {
+  if (!janitor) return;
+  clearInterval(janitor);
+  janitor = null;
+}
+
+export function reset(): void {
+  typing.clear();
+}
