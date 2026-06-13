@@ -226,3 +226,268 @@ export function createGateway(httpServer: HttpServer): PaChatServer {
 
   return io;
 }
+
+/* ──────────────────────────────────────────────────────────────── handlers ─*/
+
+function registerHandlers(namespace: PaChatNamespace, socket: PaChatSocket): void {
+  const viewer = viewerOf(socket);
+  const room = chat.roomFor;
+
+  /** Broadcasts to a conversation room, including the caller's other devices. */
+  const toConversation = (conversationId: string) => namespace.to(room(conversationId));
+
+  /** Pushes an updated conversation projection to each member individually. */
+  const pushConversation = (recipientIds: string[], conversationId: string): void => {
+    for (const userId of recipientIds) {
+      // Unread counts, mute and pin are per-member, so each recipient needs
+      // their own projection — a single shared payload would be wrong for
+      // everyone but the sender.
+      const projection = conversations.getForViewer(conversationId, {
+        id: userId,
+        username: users.findUserById(userId)?.username ?? '',
+      });
+      if (projection) {
+        namespace.to(chat.userRoom(userId)).emit('conversation:upserted', {
+          conversation: projection,
+        });
+      }
+    }
+  };
+
+  /* ── Conversations ─────────────────────────────────────────────────────── */
+
+  socket.on('conversation:open', (input, ack) =>
+    respond(ack, { socket, event: 'conversation:open' }, () => {
+      const parsed = openConversationSchema.parse(input);
+      return chat.openConversation(viewer, parsed.conversationId);
+    }),
+  );
+
+  socket.on('history:fetch', (input, ack) =>
+    respond(ack, { socket, event: 'history:fetch' }, () =>
+      chat.fetchHistory(viewer, fetchHistorySchema.parse(input)),
+    ),
+  );
+
+  socket.on('conversation:create', (input, ack) =>
+    respond(ack, { socket, event: 'conversation:create' }, () => {
+      const result = chat.createChannel(viewer, createChannelSchema.parse(input));
+
+      // Pull every invited member's live sockets into the new room so they
+      // receive messages without needing to reconnect.
+      for (const userId of result.recipientIds) {
+        namespace.in(chat.userRoom(userId)).socketsJoin(room(result.conversation.id));
+      }
+      pushConversation(result.recipientIds, result.conversation.id);
+
+      return { conversation: result.conversation };
+    }),
+  );
+
+  socket.on('conversation:direct', (input, ack) =>
+    respond(ack, { socket, event: 'conversation:direct' }, () => {
+      const parsed = openDirectSchema.parse(input);
+      const result = chat.openDirect(viewer, parsed.userId);
+
+      for (const userId of result.recipientIds) {
+        namespace.in(chat.userRoom(userId)).socketsJoin(room(result.conversation.id));
+      }
+      if (result.created) pushConversation(result.recipientIds, result.conversation.id);
+
+      return { conversation: result.conversation };
+    }),
+  );
+
+  socket.on('conversation:flags', (input, ack) =>
+    respond(ack, { socket, event: 'conversation:flags' }, () => {
+      const conversation = chat.setConversationFlags(
+        viewer,
+        toggleConversationFlagSchema.parse(input),
+      );
+      // Mute and pin are private, so this update goes only to the member's own
+      // devices — never to the rest of the channel.
+      namespace.to(chat.userRoom(viewer.id)).emit('conversation:upserted', { conversation });
+      return { conversation };
+    }),
+  );
+
+  socket.on('conversation:leave', (input, ack) =>
+    respond(ack, { socket, event: 'conversation:leave' }, () => {
+      const parsed = openConversationSchema.parse(input);
+      const result = chat.leaveConversation(viewer, parsed.conversationId);
+
+      if (result.systemMessage) {
+        toConversation(parsed.conversationId).emit('message:created', {
+          message: result.systemMessage,
+        });
+      }
+
+      namespace.in(chat.userRoom(viewer.id)).socketsLeave(room(parsed.conversationId));
+      namespace.to(chat.userRoom(viewer.id)).emit('conversation:removed', {
+        conversationId: parsed.conversationId,
+      });
+
+      toConversation(parsed.conversationId).emit('conversation:members', {
+        conversationId: parsed.conversationId,
+        members: conversations.membersOf(parsed.conversationId),
+      });
+      pushConversation(result.recipientIds, parsed.conversationId);
+
+      return { conversationId: parsed.conversationId };
+    }),
+  );
+
+  /* ── Messages ──────────────────────────────────────────────────────────── */
+
+  socket.on('message:send', (input, ack) =>
+    respond(ack, { socket, event: 'message:send' }, () => {
+      if (!sendLimiter.tryConsume(viewer.id)) {
+        throw new AppError('RATE_LIMITED', 'You are sending messages too quickly');
+      }
+
+      const parsed = sendMessageSchema.parse(input);
+      const result = chat.sendMessage(viewer, parsed);
+
+      // A deduplicated send is a retry of something already broadcast; the
+      // ack alone reconciles the caller's optimistic bubble.
+      if (!result.deduplicated) {
+        toConversation(parsed.conversationId).emit('message:created', {
+          message: result.message,
+          nonce: parsed.nonce,
+        });
+        pushConversation(result.recipientIds, parsed.conversationId);
+      }
+
+      // Sending clears the author's own typing indicator immediately rather
+      // than leaving it to expire.
+      typing.stop(parsed.conversationId, viewer.id);
+
+      return { message: result.message, nonce: parsed.nonce };
+    }),
+  );
+
+  socket.on('message:edit', (input, ack) =>
+    respond(ack, { socket, event: 'message:edit' }, () => {
+      const result = chat.editMessage(viewer, editMessageSchema.parse(input));
+      toConversation(result.message.conversationId).emit('message:updated', {
+        message: result.message,
+      });
+      pushConversation(result.recipientIds, result.message.conversationId);
+      return { message: result.message };
+    }),
+  );
+
+  socket.on('message:delete', (input, ack) =>
+    respond(ack, { socket, event: 'message:delete' }, () => {
+      const result = chat.deleteMessage(viewer, deleteMessageSchema.parse(input));
+      toConversation(result.message.conversationId).emit('message:deleted', {
+        message: result.message,
+      });
+      pushConversation(result.recipientIds, result.message.conversationId);
+      return { message: result.message };
+    }),
+  );
+
+  socket.on('message:react', (input, ack) =>
+    respond(ack, { socket, event: 'message:react' }, () => {
+      if (!reactionLimiter.tryConsume(viewer.id)) {
+        throw new AppError('RATE_LIMITED', 'Too many reactions at once');
+      }
+      const result = chat.react(viewer, reactSchema.parse(input));
+      // Broadcast the whole rehydrated message, not a delta: clients then
+      // converge on identical state regardless of arrival order.
+      toConversation(result.message.conversationId).emit('message:updated', {
+        message: result.message,
+      });
+      return { message: result.message };
+    }),
+  );
+
+  /* ── Ephemeral signals ─────────────────────────────────────────────────── */
+
+  socket.on('typing:ping', (input) => {
+    // Fire-and-forget: no acknowledgement, and a malformed or over-budget ping
+    // is dropped silently. A typing indicator is never worth an error toast.
+    try {
+      if (!typingLimiter.tryConsume(viewer.id)) return;
+
+      const { conversationId, isTyping } = typingPingSchema.parse(input);
+      if (!conversations.isMember(conversationId, viewer.id)) return;
+
+      if (isTyping) typing.start(conversationId, viewer.id);
+      else typing.stop(conversationId, viewer.id);
+    } catch {
+      /* ignored by design */
+    }
+  });
+
+  socket.on('read:advance', (input, ack) =>
+    respond(ack, { socket, event: 'read:advance' }, () => {
+      const receipt = chat.advanceRead(viewer, advanceReadSchema.parse(input));
+
+      // Other members see the cursor move; the member's own devices also need
+      // the refreshed conversation so the unread badge clears everywhere.
+      toConversation(receipt.conversationId).emit('read:changed', receipt);
+      pushConversation([viewer.id], receipt.conversationId);
+
+      return { receipt };
+    }),
+  );
+
+  /* ── Identity ──────────────────────────────────────────────────────────── */
+
+  socket.on('presence:set', (input, ack) =>
+    respond(ack, { socket, event: 'presence:set' }, () => {
+      const parsed = setPresenceSchema.parse(input);
+      presence.declare(viewer.id, parsed.state, parsed.message ?? undefined);
+      return { self: chat.bootstrap(viewer).self };
+    }),
+  );
+
+  socket.on('profile:update', (input, ack) =>
+    respond(ack, { socket, event: 'profile:update' }, () => {
+      const parsed = updateProfileSchema.parse(input);
+      const row = users.updateProfile(viewer.id, parsed);
+      const user = users.getPublicUser(row.id);
+
+      if (user) {
+        const rooms = [
+          chat.userRoom(viewer.id),
+          ...conversations.conversationIdsFor(viewer.id).map(room),
+        ];
+        namespace.to(rooms).emit('user:upserted', { user });
+      }
+
+      return { self: chat.bootstrap(viewer).self };
+    }),
+  );
+
+  socket.on('preferences:update', (input, ack) =>
+    respond(ack, { socket, event: 'preferences:update' }, () => {
+      const parsed = updatePreferencesSchema.parse(input);
+      users.updatePreferences(viewer.id, parsed);
+
+      const self = chat.bootstrap(viewer).self;
+      // Preferences are private but shared across the member's devices, so a
+      // theme change on the desktop follows them to a second window.
+      namespace.to(chat.userRoom(viewer.id)).emit('user:upserted', {
+        user: users.getPublicUser(viewer.id)!,
+      });
+      return { self };
+    }),
+  );
+
+  /* ── Discovery ─────────────────────────────────────────────────────────── */
+
+  socket.on('search:messages', (input, ack) =>
+    respond(ack, { socket, event: 'search:messages' }, () => ({
+      hits: chat.search(viewer, searchSchema.parse(input)),
+    })),
+  );
+
+  socket.on('directory:list', (ack) =>
+    respond(ack, { socket, event: 'directory:list' }, () => ({
+      users: users.listDirectory(viewer.id),
+    })),
+  );
+}
