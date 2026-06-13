@@ -107,3 +107,122 @@ const viewerOf = (socket: PaChatSocket): chat.Viewer => ({
   id: socket.data.userId,
   username: socket.data.username,
 });
+
+/* ──────────────────────────────────────────────────────────────── gateway ──*/
+
+export function createGateway(httpServer: HttpServer): PaChatServer {
+  const io: PaChatServer = new Server(httpServer, {
+    path: '/socket.io',
+    // The chat namespace keeps application traffic off the default namespace,
+    // which leaves room to add e.g. an admin namespace without colliding.
+    cors: {
+      origin: (origin, callback) => {
+        if (!origin || env.corsOrigins.includes(origin)) return callback(null, true);
+        callback(new Error('Origin not allowed'));
+      },
+      credentials: true,
+    },
+    pingInterval: TIMINGS.heartbeatIntervalMs,
+    pingTimeout: 20_000,
+    // Chat frames are small and highly compressible; per-message deflate costs
+    // more CPU than it saves bandwidth at this payload size.
+    perMessageDeflate: false,
+    maxHttpBufferSize: 256 * 1024,
+    connectionStateRecovery: {
+      // Lets a brief drop (tunnel change, laptop sleep) resume the same socket
+      // and replay missed frames instead of forcing a full re-bootstrap.
+      maxDisconnectionDuration: 2 * 60 * 1000,
+      skipMiddlewares: false,
+    },
+  });
+
+  const namespace = io.of(SOCKET_NAMESPACE);
+
+  /* ── Handshake ─────────────────────────────────────────────────────────── */
+
+  namespace.use((socket, next) => {
+    try {
+      const handshake = handshakeSchema.parse(socket.handshake.auth);
+      const principal = authenticate(handshake.token);
+
+      socket.data = {
+        userId: principal.userId,
+        username: principal.username,
+        sessionId: principal.sessionId,
+        connectedAt: Date.now(),
+      };
+
+      log.debug('handshake accepted', {
+        user: principal.username,
+        client: `${handshake.client.name}/${handshake.client.version}`,
+        platform: handshake.client.platform,
+      });
+
+      next();
+    } catch (error) {
+      const appError = toAppError(error);
+      log.warn('handshake rejected', { code: appError.code, message: appError.message });
+      // Socket.IO surfaces `err.data` to the client's `connect_error`, which
+      // is how the renderer distinguishes "token expired, refresh and retry"
+      // from "wrong protocol version, tell the user to update".
+      const failure = new Error(appError.message) as Error & { data?: unknown };
+      failure.data = publicShape(appError);
+      next(failure);
+    }
+  });
+
+  /* ── Connection ────────────────────────────────────────────────────────── */
+
+  namespace.on('connection', (socket) => {
+    const viewer = viewerOf(socket);
+
+    // One room per conversation plus one per member. The member room is what
+    // makes multi-device work: a change is pushed to every window the person
+    // has open, not just the one that caused it.
+    socket.join(chat.roomsForViewer(viewer));
+
+    presence.attach(viewer.id, socket.id);
+
+    try {
+      socket.emit('session:ready', chat.bootstrap(viewer));
+    } catch (error) {
+      log.error('bootstrap failed', { err: error, user: viewer.username });
+      socket.emit('server:error', publicShape(toAppError(error)));
+      socket.disconnect(true);
+      return;
+    }
+
+    log.info('connected', { user: viewer.username, sockets: presence.connectionCount() });
+
+    registerHandlers(namespace, socket);
+
+    socket.on('disconnect', (reason) => {
+      typing.clearUser(viewer.id);
+      presence.detach(viewer.id, socket.id);
+      log.info('disconnected', { user: viewer.username, reason });
+    });
+  });
+
+  /* ── Server-pushed fan-out ─────────────────────────────────────────────── */
+
+  // Presence reaches exactly the people who can see the member: everyone who
+  // shares at least one conversation with them, and all of their own devices.
+  presence.onPresenceChange((userId, snapshot) => {
+    const rooms = [
+      chat.userRoom(userId),
+      ...conversations.conversationIdsFor(userId).map(chat.roomFor),
+    ];
+    namespace.to(rooms).emit('presence:changed', { userId, presence: snapshot });
+
+    const user = users.getPublicUser(userId);
+    if (user) namespace.to(rooms).emit('user:upserted', { user });
+  });
+
+  typing.onTypingChange((conversationId, userIds) => {
+    namespace.to(chat.roomFor(conversationId)).emit('typing:changed', { conversationId, userIds });
+  });
+
+  typing.startJanitor();
+
+  return io;
+}
