@@ -72,3 +72,46 @@ function readWebp(buffer: Buffer): Dimensions | null {
 
   return null;
 }
+
+/**
+ * JPEG: walk the marker chain until a Start-Of-Frame segment, whose payload
+ * carries the dimensions. There is no fixed offset — any number of metadata
+ * segments (EXIF, ICC, comments) may precede the frame.
+ */
+function readJpeg(buffer: Buffer): Dimensions | null {
+  if (buffer.length < 4) return null;
+  if (buffer.readUInt16BE(0) !== 0xffd8) return null;
+
+  let offset = 2;
+  while (offset + 9 < buffer.length) {
+    if (buffer[offset] !== 0xff) {
+      offset += 1;
+      continue;
+    }
+
+    const marker = buffer[offset + 1]!;
+
+    // Standalone markers carry no length field.
+    if (marker === 0xd8 || marker === 0x01 || (marker >= 0xd0 && marker <= 0xd7)) {
+      offset += 2;
+      continue;
+    }
+    // Start of scan: pixel data begins, no frame header will follow.
+    if (marker === 0xda) return null;
+
+    const length = buffer.readUInt16BE(offset + 2);
+
+    // SOF0/1/2/3/5/6/7/9/10/11/13/14/15 — excluding DHT (0xc4), JPG (0xc8)
+    // and DAC (0xcc), which share the 0xc_ range but are not frame headers.
+    const isStartOfFrame =
+      marker >= 0xc0 && marker <= 0xcf && marker !== 0xc4 && marker !== 0xc8 && marker !== 0xcc;
+
+    if (isStartOfFrame) {
+      return { height: buffer.readUInt16BE(offset + 5), width: buffer.readUInt16BE(offset + 7) };
+    }
+
+    offset += 2 + length;
+  }
+
+  return null;
+}
