@@ -113,3 +113,44 @@ uploadRouter.post(
     res.status(201).json(payload);
   },
 );
+
+/**
+ * Download route. Authenticated — an attachment is only readable by its
+ * uploader or by members of the conversation it was posted to, so an
+ * attachment URL leaking outside the workspace is not enough to read it.
+ */
+export const filesRouter = Router();
+
+filesRouter.get('/:storageKey/:name', requireAuth, (req, res) => {
+  if (!req.principal) throw unauthorized();
+
+  const { storageKey } = req.params;
+  // Reject anything that is not a bare id before it reaches the filesystem.
+  if (!storageKey || !/^[0-9a-z]{20,28}$/.test(storageKey)) throw notFound('No such file');
+
+  const row = attachments.findByStorageKey(storageKey);
+  if (!row) throw notFound('No such file');
+  if (!attachments.canAccessAttachment(row, req.principal.userId)) {
+    throw forbidden('You do not have access to that file');
+  }
+
+  const path = join(env.uploadDir, row.storage_key, 'blob');
+  if (!existsSync(path)) throw notFound('That file is no longer stored');
+
+  const disposition = INLINE_TYPES.has(row.mime_type) ? 'inline' : 'attachment';
+
+  res.setHeader('Content-Type', row.mime_type);
+  res.setHeader('Content-Length', statSync(path).size);
+  res.setHeader(
+    'Content-Disposition',
+    `${disposition}; filename*=UTF-8''${encodeURIComponent(row.name)}`,
+  );
+  // Immutable: a storage key is minted once per upload, so a given URL can
+  // never return different bytes.
+  res.setHeader('Cache-Control', 'private, max-age=31536000, immutable');
+  // Defence in depth — stop a crafted upload being sniffed into something
+  // executable by the renderer.
+  res.setHeader('X-Content-Type-Options', 'nosniff');
+
+  createReadStream(path).pipe(res);
+});
