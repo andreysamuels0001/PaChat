@@ -103,3 +103,52 @@ function banner(): void {
       `  Health    ${origin}${API_PREFIX}/health\n\n`,
   );
 }
+
+/**
+ * Graceful shutdown. Sockets are closed before the HTTP listener so connected
+ * clients receive a clean disconnect and reconnect deliberately, instead of
+ * discovering the drop via a ping timeout 20 seconds later.
+ */
+function installShutdownHooks(
+  httpServer: ReturnType<typeof createServer>,
+  io: ReturnType<typeof createGateway>,
+): void {
+  let closing = false;
+
+  const shutdown = async (signal: string): Promise<void> => {
+    if (closing) return;
+    closing = true;
+    log.info('shutting down', { signal });
+
+    typing.stopJanitor();
+    typing.reset();
+    presence.reset();
+    resetAllPresence();
+
+    await io.close();
+    await new Promise<void>((resolve) => httpServer.close(() => resolve()));
+
+    closeDb();
+    log.info('goodbye');
+    process.exit(0);
+  };
+
+  process.on('SIGINT', () => void shutdown('SIGINT'));
+  process.on('SIGTERM', () => void shutdown('SIGTERM'));
+
+  // A crashed process that keeps listening is worse than one that exits: it
+  // accepts connections it can no longer serve. Log loudly, then stop.
+  process.on('uncaughtException', (error) => {
+    log.error('uncaught exception', { err: error });
+    void shutdown('uncaughtException');
+  });
+  process.on('unhandledRejection', (reason) => {
+    log.error('unhandled rejection', { err: reason });
+  });
+}
+
+main().catch((error: unknown) => {
+  log.error('failed to start', { err: error });
+  closeDb();
+  process.exit(1);
+});
