@@ -54,3 +54,20 @@ step('Preparing database');
 run('npm', ['run', 'db:migrate']);
 run('npm', ['run', 'db:seed']);
 ok('schema migrated and demo workspace seeded');
+
+/**
+ * Draws the closing box from the content rather than from hard-coded padding,
+ * so the frame stays square however long the lines inside it are.
+ */
+const lines = [
+  'PaChat is ready.',
+  '',
+  'Start everything:   npm run dev',
+  'Demo credentials:   ada@pachat.app / pachat123',
+];
+
+const inner = Math.max(...lines.map((line) => line.length)) + 4;
+const rule = '─'.repeat(inner);
+const body = lines.map((line) => `│  ${line.padEnd(inner - 2)}│`).join('\n');
+
+console.log(`\n\x1b[35m┌${rule}┐\n${body}\n└${rule}┘\x1b[0m\n`);
