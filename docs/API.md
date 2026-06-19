@@ -129,3 +129,72 @@ Accepts `?token=<access>` as a fallback to the `Authorization` header, because
 change anything.
 
 ---
+
+# Realtime
+
+## Handshake
+
+Sent in the Socket.IO `auth` object. A rejection closes the connection with a
+typed `connect_error`, whose `data` carries the standard error envelope.
+
+```ts
+{
+  token: string,            // access token from /api/auth/login
+  protocolVersion: 1,
+  client: { name: string, version: string, platform: string }
+}
+```
+
+| Rejection           | Client should                                                        |
+| :------------------ | :------------------------------------------------------------------- |
+| `UNAUTHORIZED`      | Refresh the access token and let the next automatic attempt carry it |
+| `PROTOCOL_MISMATCH` | Stop retrying and prompt for an update                               |
+
+## `session:ready`
+
+Pushed once, immediately after a successful handshake. **One frame carries
+everything the first screen needs** — there is no launch-time request
+waterfall.
+
+```ts
+{
+  self: Self,
+  conversations: Conversation[],   // hydrated, with unread state and previews
+  users: User[],                   // everyone the viewer can see
+  serverTime: number,
+  protocolVersion: 1
+}
+```
+
+---
+
+## Client → server
+
+Every event answers through an acknowledgement:
+
+```ts
+type Result<T> = { ok: true; data: T } | { ok: false; error: WireError };
+```
+
+Nothing throws across the socket boundary, so one bad payload cannot tear down
+a connection and lose every other subscription on it.
+
+| Event                 | Payload                                                       | Acknowledges with    |
+| :-------------------- | :------------------------------------------------------------ | :------------------- |
+| `conversation:open`   | `{ conversationId }`                                          | `HistoryPage`        |
+| `history:fetch`       | `{ conversationId, before?, limit? }`                         | `HistoryPage`        |
+| `conversation:create` | `{ name, topic?, icon?, isPrivate?, memberIds? }`             | `{ conversation }`   |
+| `conversation:direct` | `{ userId }`                                                  | `{ conversation }`   |
+| `conversation:flags`  | `{ conversationId, muted?, pinned? }`                         | `{ conversation }`   |
+| `conversation:leave`  | `{ conversationId }`                                          | `{ conversationId }` |
+| `message:send`        | `{ conversationId, nonce, body, replyToId?, attachmentIds? }` | `{ message, nonce }` |
+| `message:edit`        | `{ messageId, body }`                                         | `{ message }`        |
+| `message:delete`      | `{ messageId }`                                               | `{ message }`        |
+| `message:react`       | `{ messageId, emoji }`                                        | `{ message }`        |
+| `read:advance`        | `{ conversationId, readAt }`                                  | `{ receipt }`        |
+| `presence:set`        | `{ state, message? }`                                         | `{ self }`           |
+| `profile:update`      | `{ displayName?, title?, accentColor?, avatarUrl? }`          | `{ self }`           |
+| `preferences:update`  | `Partial<Preferences>`                                        | `{ self }`           |
+| `search:messages`     | `{ query, conversationId?, limit? }`                          | `{ hits }`           |
+| `directory:list`      | _(ack only)_                                                  | `{ users }`          |
+| `typing:ping`         | `{ conversationId, isTyping }`                                | **no ack**           |
