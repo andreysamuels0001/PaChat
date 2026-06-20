@@ -198,3 +198,92 @@ a connection and lose every other subscription on it.
 | `search:messages`     | `{ query, conversationId?, limit? }`                          | `{ hits }`           |
 | `directory:list`      | _(ack only)_                                                  | `{ users }`          |
 | `typing:ping`         | `{ conversationId, isTyping }`                                | **no ack**           |
+
+### `message:send` — the important one
+
+```ts
+{
+  conversationId: string,
+  nonce: string,            // client-generated idempotency key, 8–64 chars
+  body: string,             // ≤ 4000 chars; may be empty if attachments exist
+  replyToId?: string | null,
+  attachmentIds?: string[]  // ≤ 10
+}
+```
+
+**The nonce is what makes retries safe.** A unique partial index on
+`(author_id, nonce)` means a retried send after a flaky reconnect resolves to
+the original row and acknowledges with the same message id — never a duplicate.
+The server does not re-broadcast a deduplicated send; the acknowledgement alone
+reconciles the caller's optimistic bubble.
+
+Other guarantees:
+
+- `replyToId` must point into the **same conversation**, so a crafted payload
+  cannot quote a message from a channel you cannot see.
+- Attachment binding requires `message_id IS NULL` **and** a matching owner, so
+  one member cannot attach another's upload.
+- Sending advances the author's own read cursor — your message is never shown
+  back to you as unread.
+- Sending clears your typing indicator immediately.
+
+### `typing:ping` — fire and forget
+
+No acknowledgement by design. A malformed or over-budget ping is dropped
+silently: a typing indicator is never worth an error toast. The client throttles
+`isTyping: true` to one every 2 s and sends `false` immediately when the
+composer empties.
+
+### `read:advance`
+
+The cursor is applied as `MAX(last_read_at, ?)` in SQL, so an out-of-order
+acknowledgement from a second device cannot rewind it and resurrect already-read
+messages. A `readAt` in the future is clamped to now.
+
+---
+
+## Server → client
+
+All fire-and-forget fan-out.
+
+| Event                   | Payload                       | Sent to                            |
+| :---------------------- | :---------------------------- | :--------------------------------- |
+| `session:ready`         | `SessionReady`                | The connecting socket              |
+| `session:revoked`       | `{ reason }`                  | A session being force-signed-out   |
+| `message:created`       | `{ message, nonce? }`         | The conversation room              |
+| `message:updated`       | `{ message }`                 | The conversation room              |
+| `message:deleted`       | `{ message }`                 | The conversation room              |
+| `conversation:upserted` | `{ conversation }`            | **Each member individually**       |
+| `conversation:removed`  | `{ conversationId }`          | The member who left                |
+| `conversation:members`  | `{ conversationId, members }` | The conversation room              |
+| `typing:changed`        | `{ conversationId, userIds }` | The conversation room              |
+| `read:changed`          | `ReadReceipt`                 | The conversation room              |
+| `presence:changed`      | `{ userId, presence }`        | Everyone who shares a conversation |
+| `user:upserted`         | `{ user }`                    | Everyone who shares a conversation |
+| `server:error`          | `WireError`                   | The affected socket                |
+
+### Why `conversation:upserted` is per-member
+
+Unread counts, mute and pin are **private to each member**. A single shared
+payload would be correct for the sender and wrong for everyone else, so the
+gateway builds one projection per recipient and delivers it to that member's
+own room.
+
+### Reactions broadcast whole state
+
+`message:react` fans out a `message:updated` carrying the fully rehydrated
+message, not a delta. Clients therefore converge on identical state regardless
+of the order updates arrive in — which matters because two people can react to
+the same message in the same millisecond.
+
+### Room topology
+
+```
+user:<userId>            every device belonging to one member
+conversation:<convId>    every member of one conversation
+```
+
+The member room is what makes multi-device work: a change reaches every window
+a person has open, not only the one that caused it.
+
+---
