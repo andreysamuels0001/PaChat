@@ -56,3 +56,35 @@ you find a gap in it.
   the others.
 - A **production boot refuses to start** if the JWT secrets are still the
   placeholders from `.env.example`.
+
+### Authorisation
+
+- **One membership gate.** Every conversation handler passes through
+  `assertMember(conversationId, viewer)`. There is no second implementation to
+  forget to update.
+- **Search is scoped by a membership subquery**, which is the authorisation
+  boundary itself — no code path can return a message from a channel the viewer
+  is not in.
+- **Replies must target the same conversation**, so a crafted payload cannot
+  quote a message from a channel you cannot see.
+- **Attachment binding requires `message_id IS NULL` and a matching owner**, so
+  one member cannot attach another member's upload.
+- Edits are author-only. Deletes are author-or-moderator.
+
+### Transport and input
+
+- Every inbound payload is parsed with a **Zod schema** before it reaches any
+  handler. Nothing is trusted because it arrived over an authenticated socket.
+- **Protocol-versioned handshake.** A stale installed build is refused rather
+  than allowed to corrupt state after a breaking change.
+- JSON bodies are capped at **128 KB**; socket frames at **256 KB**.
+- `helmet` sets the standard response headers; CORS is an explicit allow-list.
+
+### Rate limiting
+
+| Surface         | Budget                           |
+| :-------------- | :------------------------------- |
+| Auth endpoints  | 20/min per IP, fixed window      |
+| `message:send`  | burst 10, refill 3/s, per member |
+| `message:react` | burst 25, refill 8/s, per member |
+| `typing:ping`   | burst 20, refill 5/s, per member |
