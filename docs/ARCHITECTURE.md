@@ -75,3 +75,90 @@ These live in `shared` specifically so that a server-generated system message
 and a client-rendered one describe people and times identically.
 
 ---
+
+## 3 · The server
+
+```
+main.ts                boot · housekeeping · graceful shutdown
+├── config/env.ts      Zod-validated configuration; refuses bad input at boot
+├── db/                connection pragmas · migrations · CLI · demo seed
+├── lib/               logger · errors · tokens · password · limiters
+├── repositories/      the only code that writes SQL
+├── services/          business rules and authorisation
+├── http/              Express app, middleware, routes
+└── realtime/          the Socket.IO gateway
+```
+
+### Layering rules
+
+| Layer               | May import                      | Must not                                  |
+| :------------------ | :------------------------------ | :---------------------------------------- |
+| `repositories`      | `db`, `lib`, `shared`           | know about HTTP, sockets or authorisation |
+| `services`          | `repositories`, `lib`, `shared` | know about transports                     |
+| `http` / `realtime` | `services`, `lib`, `shared`     | write SQL                                 |
+
+The practical consequence: **authorisation lives in exactly one place.** Every
+conversation handler calls `assertMember(conversationId, viewer)`. There is no
+second implementation to forget to update.
+
+### Batched hydration
+
+A page of history costs a constant number of statements regardless of its
+contents. `hydrateMessages(rows)` issues:
+
+1. one query for all reactions across the page,
+2. one for all attachments,
+3. one for all reply parents,
+
+then assembles the domain objects in memory. Fifty messages with four hundred
+reactions is four statements, not four hundred.
+
+### Keyset pagination
+
+Ids are time-prefixed, so `id` is simultaneously the sort key and the cursor:
+
+```sql
+SELECT * FROM messages
+ WHERE conversation_id = ? AND id < ?
+ ORDER BY id DESC
+ LIMIT ?
+```
+
+Served entirely by the `(conversation_id, id DESC)` index. One extra row is
+fetched beyond the limit purely to answer _"is there more?"_ without a `COUNT`.
+
+### Idempotent sends
+
+The unique partial index `(author_id, nonce) WHERE nonce IS NOT NULL` is what
+makes retries safe. `insertMessage` checks for an existing nonce **inside** the
+transaction, so two concurrent retries cannot both win.
+
+### Presence and typing are not persisted truths
+
+Both are derived from live connections and held in memory:
+
+- **Presence** counts sockets per member, so several open windows are one
+  online person. "Offline" is published only after the _last_ socket has been
+  gone for a grace period — otherwise every reload would flash the workspace
+  offline and back.
+- **Typing** entries carry their own TTL. One process-wide janitor expires
+  them, so a client that disconnects mid-keystroke cannot leave a ghost
+  indicator running forever.
+
+Both publish through listener callbacks that the gateway subscribes to, which
+keeps the services transport-agnostic.
+
+### Room topology
+
+```
+user:<userId>              every device belonging to one member
+conversation:<convId>      every member of one conversation
+```
+
+The member room is what makes multi-device work: a change is pushed to every
+window a person has open, not only the one that caused it. It is also how
+**per-member projections** are delivered — unread counts, mute and pin are
+private, so each recipient receives their own view of the same conversation
+rather than one shared payload that would be wrong for everyone but the sender.
+
+---
