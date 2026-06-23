@@ -88,3 +88,17 @@ you find a gap in it.
 | `message:send`  | burst 10, refill 3/s, per member |
 | `message:react` | burst 25, refill 8/s, per member |
 | `typing:ping`   | burst 20, refill 5/s, per member |
+
+### Attachments
+
+- **Opaque server-generated storage keys.** The on-disk layout is independent
+  of the display name, so a client-supplied filename is never interpreted as a
+  path component.
+- Filenames are sanitised (control characters and Windows-reserved characters
+  stripped) and used only for display and `Content-Disposition`.
+- **Downloads are authenticated** — readable by the uploader or by a member of
+  the conversation the attachment was posted to. A leaked URL is not enough.
+- `X-Content-Type-Options: nosniff` on every download, so a crafted upload
+  cannot be sniffed into something executable.
+- The `?token=` query fallback exists only because `<img src>` cannot carry a
+  header, and is **restricted to `GET`** so a URL alone can never change state.
