@@ -72,3 +72,43 @@ export type MenuCommand =
   | 'previous-conversation'
   | 'toggle-members'
   | 'mark-all-read';
+
+/** The shape `window.pachat` takes in the renderer. */
+export interface PaChatBridge {
+  readonly info: AppInfo;
+
+  window: {
+    minimise(): void;
+    toggleMaximise(): void;
+    close(): void;
+    onStateChange(listener: (state: WindowState) => void): () => void;
+  };
+
+  secrets: {
+    set(key: string, value: string): Promise<void>;
+    get(key: string): Promise<string | null>;
+    delete(key: string): Promise<void>;
+  };
+
+  notifications: {
+    show(request: NotifyRequest): void;
+    onActivated(listener: (conversationId: string) => void): () => void;
+  };
+
+  badge: {
+    set(count: number): void;
+  };
+
+  theme: {
+    set(mode: ThemeMode): void;
+  };
+
+  shell: {
+    openExternal(url: string): void;
+  };
+
+  app: {
+    onFocusChanged(listener: (focused: boolean) => void): () => void;
+    onMenuCommand(listener: (command: MenuCommand) => void): () => void;
+  };
+}
