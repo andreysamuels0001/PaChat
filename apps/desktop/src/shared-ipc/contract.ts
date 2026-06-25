@@ -38,3 +38,37 @@ export const IPC = {
   /* Global accelerators forwarded from the application menu. */
   menuCommand: 'menu:command',
 } as const;
+
+export interface WindowState {
+  isMaximised: boolean;
+  isFullScreen: boolean;
+}
+
+export interface AppInfo {
+  version: string;
+  platform: 'win32' | 'darwin' | 'linux';
+  isPackaged: boolean;
+  /** Base URL of the realtime gateway, resolved by the main process. */
+  serverUrl: string;
+}
+
+export interface NotifyRequest {
+  title: string;
+  body: string;
+  /** Echoed back on activation so the renderer can focus the right thread. */
+  conversationId: string;
+  silent?: boolean;
+}
+
+export type ThemeMode = 'dark' | 'light' | 'system';
+
+/** Commands the native menu can trigger in the renderer. */
+export type MenuCommand =
+  | 'open-command-palette'
+  | 'open-settings'
+  | 'new-channel'
+  | 'focus-composer'
+  | 'next-conversation'
+  | 'previous-conversation'
+  | 'toggle-members'
+  | 'mark-all-read';
