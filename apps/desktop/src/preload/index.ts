@@ -29,3 +29,50 @@ function subscribe<T>(channel: string, listener: (payload: T) => void): () => vo
     ipcRenderer.removeListener(channel, handler);
   };
 }
+
+// Read synchronously during preload so `window.pachat.info` is a plain value in
+// the renderer rather than a promise every call site has to await. This is the
+// one place a synchronous IPC round-trip is worth it: it happens once, before
+// the page has any content to block.
+const info = ipcRenderer.sendSync(IPC.appInfo) as AppInfo;
+
+const bridge: PaChatBridge = {
+  info,
+
+  window: {
+    minimise: () => ipcRenderer.send(IPC.windowMinimise),
+    toggleMaximise: () => ipcRenderer.send(IPC.windowToggleMaximise),
+    close: () => ipcRenderer.send(IPC.windowClose),
+    onStateChange: (listener) => subscribe<WindowState>(IPC.windowState, listener),
+  },
+
+  secrets: {
+    set: (key, value) => ipcRenderer.invoke(IPC.secretSet, key, value) as Promise<void>,
+    get: (key) => ipcRenderer.invoke(IPC.secretGet, key) as Promise<string | null>,
+    delete: (key) => ipcRenderer.invoke(IPC.secretDelete, key) as Promise<void>,
+  },
+
+  notifications: {
+    show: (request: NotifyRequest) => ipcRenderer.send(IPC.notify, request),
+    onActivated: (listener) => subscribe<string>(IPC.notifyActivated, listener),
+  },
+
+  badge: {
+    set: (count) => ipcRenderer.send(IPC.badgeSet, count),
+  },
+
+  theme: {
+    set: (mode: ThemeMode) => ipcRenderer.send(IPC.themeSet, mode),
+  },
+
+  shell: {
+    openExternal: (url) => ipcRenderer.send(IPC.openExternal, url),
+  },
+
+  app: {
+    onFocusChanged: (listener) => subscribe<boolean>(IPC.appFocusChanged, listener),
+    onMenuCommand: (listener) => subscribe<MenuCommand>(IPC.menuCommand, listener),
+  },
+};
+
+contextBridge.exposeInMainWorld('pachat', bridge);
