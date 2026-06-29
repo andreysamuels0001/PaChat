@@ -46,3 +46,40 @@ function writeVault(vault: Vault): void {
   cache = vault;
   writeFileSync(vaultPath(), JSON.stringify(vault), { encoding: 'utf8', mode: 0o600 });
 }
+
+/**
+ * Some Linux desktops have no secret service available. Falling back to
+ * plaintext would silently downgrade security, so storage is refused instead
+ * and the user simply signs in each launch.
+ */
+export function isAvailable(): boolean {
+  return safeStorage.isEncryptionAvailable();
+}
+
+export function setSecret(key: string, value: string): void {
+  if (!isAvailable()) return;
+  const vault = readVault();
+  vault[key] = safeStorage.encryptString(value).toString('base64');
+  writeVault(vault);
+}
+
+export function getSecret(key: string): string | null {
+  if (!isAvailable()) return null;
+  const stored = readVault()[key];
+  if (!stored) return null;
+  try {
+    return safeStorage.decryptString(Buffer.from(stored, 'base64'));
+  } catch {
+    // Decryption fails after an OS reinstall or a profile move. Drop the
+    // unreadable entry so the next write starts clean.
+    deleteSecret(key);
+    return null;
+  }
+}
+
+export function deleteSecret(key: string): void {
+  const vault = readVault();
+  if (!(key in vault)) return;
+  delete vault[key];
+  writeVault(vault);
+}
