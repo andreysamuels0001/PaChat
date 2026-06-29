@@ -63,3 +63,42 @@ export function restoredBounds(): { bounds: Rectangle; isMaximised: boolean } {
   }
   return { bounds: saved.bounds, isMaximised: saved.isMaximised };
 }
+
+/**
+ * Persists geometry on move, resize and maximise — debounced, because a single
+ * drag fires hundreds of `move` events and each one would otherwise be a
+ * synchronous disk write.
+ */
+export function trackWindow(window: BrowserWindow): void {
+  let timer: NodeJS.Timeout | null = null;
+
+  const persist = (): void => {
+    if (window.isDestroyed()) return;
+    const payload: Persisted = {
+      // `getNormalBounds` is the pre-maximise rectangle, which is what should
+      // be restored when the user later un-maximises.
+      bounds: window.getNormalBounds(),
+      isMaximised: window.isMaximized(),
+    };
+    try {
+      mkdirSync(dirname(statePath()), { recursive: true });
+      writeFileSync(statePath(), JSON.stringify(payload));
+    } catch {
+      /* geometry is a nicety; never fail a resize over it */
+    }
+  };
+
+  const schedule = (): void => {
+    if (timer) clearTimeout(timer);
+    timer = setTimeout(persist, 400);
+  };
+
+  window.on('resize', schedule);
+  window.on('move', schedule);
+  window.on('maximize', schedule);
+  window.on('unmaximize', schedule);
+  window.once('close', () => {
+    if (timer) clearTimeout(timer);
+    persist();
+  });
+}
