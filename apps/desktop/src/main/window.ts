@@ -84,3 +84,14 @@ export function createMainWindow(): BrowserWindow {
 
   return window;
 }
+
+/** Opens a URL in the default browser, refusing anything but http(s). */
+export async function openExternally(url: string): Promise<void> {
+  try {
+    const parsed = new URL(url);
+    if (parsed.protocol !== 'https:' && parsed.protocol !== 'http:') return;
+    await shell.openExternal(url);
+  } catch {
+    /* malformed URL — nothing to open */
+  }
+}
