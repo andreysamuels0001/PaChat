@@ -121,3 +121,11 @@ export function registerIpcHandlers(window: BrowserWindow): void {
     if (typeof url === 'string') void openExternally(url);
   });
 }
+
+/** Drops every listener — called before the app quits. */
+export function disposeIpcHandlers(): void {
+  for (const channel of Object.values(IPC)) {
+    ipcMain.removeHandler(channel);
+    ipcMain.removeAllListeners(channel);
+  }
+}
