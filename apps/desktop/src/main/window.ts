@@ -95,3 +95,10 @@ export async function openExternally(url: string): Promise<void> {
     /* malformed URL — nothing to open */
   }
 }
+
+/** Repaints the native titlebar overlay after an in-app theme change. */
+export function applyNativeTheme(window: BrowserWindow, dark: boolean): void {
+  if (window.isDestroyed() || process.platform !== 'win32') return;
+  window.setTitleBarOverlay(dark ? OVERLAY.dark : OVERLAY.light);
+  window.setBackgroundColor(dark ? '#0b0c10' : '#f7f8fa');
+}
