@@ -62,3 +62,12 @@ async function bootstrap(): Promise<void> {
     void loadRenderer(mainWindow);
   });
 }
+
+async function loadRenderer(window: BrowserWindow): Promise<void> {
+  if (DEV_SERVER_URL) {
+    await window.loadURL(DEV_SERVER_URL);
+    window.webContents.openDevTools({ mode: 'detach' });
+    return;
+  }
+  await window.loadFile(join(__dirname, '../renderer/index.html'));
+}
