@@ -1,0 +1,77 @@
+# ─────────────────────────────────────────────────────────────────────────────
+# Packaging configuration.
+#
+#   npm run package    unpacked build in release/ — fast, for smoke testing
+#   npm run dist       installers for the current platform
+#
+# Icons: drop `icon.png` (1024×1024), `icon.ico` and `icon.icns` into
+# apps/desktop/build/ and electron-builder picks them up automatically. Until
+# then the default Electron icon is used, so packaging works out of the box.
+# ─────────────────────────────────────────────────────────────────────────────
+
+appId: app.pachat.desktop
+productName: PaChat
+copyright: Copyright © 2026 Andrey Samuels
+
+directories:
+  output: release
+  buildResources: build
+
+# `out/` is the electron-vite build output; nothing else needs to ship.
+files:
+  - out/**/*
+  - package.json
+  - '!**/*.map'
+  - '!**/*.ts'
+
+# Compression trades a slower build for a meaningfully smaller installer.
+compression: maximum
+asar: true
+
+# ── Windows ──────────────────────────────────────────────────────────────────
+win:
+  target:
+    - target: nsis
+      arch: [x64, arm64]
+  artifactName: ${productName}-${version}-win-${arch}.${ext}
+
+nsis:
+  oneClick: false
+  perMachine: false
+  allowToChangeInstallationDirectory: true
+  createDesktopShortcut: always
+  createStartMenuShortcut: true
+  shortcutName: PaChat
+  # Keeping the uninstaller tidy matters for a desktop app people actually
+  # install and remove.
+  deleteAppDataOnUninstall: false
+
+# ── macOS ────────────────────────────────────────────────────────────────────
+mac:
+  target:
+    - target: dmg
+      arch: [x64, arm64]
+  category: public.app-category.social-networking
+  artifactName: ${productName}-${version}-mac-${arch}.${ext}
+  # The hardened runtime is required for notarisation; entitlements are only
+  # needed once code signing is configured.
+  hardenedRuntime: true
+  gatekeeperAssess: false
+
+dmg:
+  artifactName: ${productName}-${version}-mac-${arch}.${ext}
+
+# ── Linux ────────────────────────────────────────────────────────────────────
+linux:
+  target:
+    - AppImage
+    - deb
+  category: Network;InstantMessaging
+  synopsis: Real-time chat desktop application
+  description: >-
+    PaChat is a self-hosted real-time chat client with presence, typing
+    indicators, read receipts, threaded replies and full-text search.
+  artifactName: ${productName}-${version}-linux-${arch}.${ext}
+
+# Never publish implicitly — a release is an explicit, deliberate action.
+publish: null
