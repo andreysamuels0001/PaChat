@@ -1,0 +1,86 @@
+/**
+ * Design tokens.
+ *
+ * Two ramps and nothing else: one neutral, one accent. Every surface, border
+ * and piece of text in the application derives from them, which is what keeps
+ * a dark and a light theme from drifting into two separately-tuned designs.
+ *
+ * Raw values live on `:root` so they can be swapped at runtime by flipping
+ * `data-theme`. `@theme inline` then maps them into Tailwind's utility
+ * namespace without baking in the resolved colour.
+ */
+
+:root {
+  color-scheme: dark;
+
+  /* ── Neutral ramp — window chrome through to foreground text ──────────── */
+  --c-sunken: #07080c;
+  --c-base: #0b0c10;
+  --c-raised: #11131a;
+  --c-overlay: #171a23;
+  --c-hover: #1d212c;
+  --c-active: #242936;
+
+  --c-border-subtle: rgb(255 255 255 / 6%);
+  --c-border: rgb(255 255 255 / 10%);
+  --c-border-strong: rgb(255 255 255 / 18%);
+
+  --c-text: #e9ebf2;
+  --c-text-muted: #a3a9bb;
+  --c-text-dim: #6c7384;
+  --c-text-faint: #4a505f;
+  --c-text-inverse: #0b0c10;
+
+  /* ── Accent ramp — indigo into violet ─────────────────────────────────── */
+  --c-accent-50: #eef1ff;
+  --c-accent-200: #c3cafe;
+  --c-accent-300: #a0a8fb;
+  --c-accent-400: #818cf8;
+  --c-accent-500: #6366f1;
+  --c-accent-600: #4f46e5;
+  --c-accent-700: #4338ca;
+  --c-accent-contrast: #ffffff;
+
+  /* ── Semantic ─────────────────────────────────────────────────────────── */
+  --c-success: #34d399;
+  --c-warning: #fbbf24;
+  --c-danger: #f87171;
+  --c-info: #38bdf8;
+
+  /* ── Presence ─────────────────────────────────────────────────────────── */
+  --c-presence-online: #34d399;
+  --c-presence-away: #fbbf24;
+  --c-presence-busy: #f87171;
+  --c-presence-offline: #5b6274;
+
+  /* ── Per-member accents. Each member's avatar ring and reply spine use
+       their own colour, which makes a busy channel scannable by hue. ─────── */
+  --c-user-indigo: #818cf8;
+  --c-user-violet: #a78bfa;
+  --c-user-cyan: #22d3ee;
+  --c-user-emerald: #34d399;
+  --c-user-amber: #fbbf24;
+  --c-user-rose: #fb7185;
+  --c-user-sky: #38bdf8;
+  --c-user-fuchsia: #e879f9;
+
+  /* ── Elevation. Layered rather than single-blur, so a panel reads as
+       physically above the surface instead of merely darker. ─────────────── */
+  --shadow-sm: 0 1px 2px rgb(0 0 0 / 40%);
+  --shadow-md: 0 4px 12px -2px rgb(0 0 0 / 45%), 0 2px 4px -2px rgb(0 0 0 / 30%);
+  --shadow-lg: 0 16px 40px -8px rgb(0 0 0 / 55%), 0 4px 12px -4px rgb(0 0 0 / 35%);
+  --shadow-glow: 0 0 0 1px rgb(99 102 241 / 35%), 0 8px 32px -8px rgb(99 102 241 / 45%);
+
+  /* ── Motion. One easing curve, three durations. Anything slower than
+       240ms on a desktop app reads as lag rather than polish. ────────────── */
+  --ease: cubic-bezier(0.22, 1, 0.36, 1);
+  --ease-in-out: cubic-bezier(0.65, 0, 0.35, 1);
+  --duration-fast: 120ms;
+  --duration-base: 180ms;
+  --duration-slow: 240ms;
+
+  /* ── Layout constants shared between CSS and the window chrome ────────── */
+  --titlebar-height: 44px;
+  --sidebar-width: 288px;
+  --members-width: 264px;
+}
