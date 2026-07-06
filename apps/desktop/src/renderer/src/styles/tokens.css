@@ -84,3 +84,42 @@
   --sidebar-width: 288px;
   --members-width: 264px;
 }
+
+:root[data-theme='light'] {
+  color-scheme: light;
+
+  --c-sunken: #eceef3;
+  --c-base: #f7f8fa;
+  --c-raised: #ffffff;
+  --c-overlay: #ffffff;
+  --c-hover: #f0f2f6;
+  --c-active: #e6e9f0;
+
+  --c-border-subtle: rgb(16 20 32 / 6%);
+  --c-border: rgb(16 20 32 / 10%);
+  --c-border-strong: rgb(16 20 32 / 18%);
+
+  --c-text: #14171f;
+  --c-text-muted: #525a6b;
+  --c-text-dim: #717a8c;
+  --c-text-faint: #9aa2b2;
+  --c-text-inverse: #ffffff;
+
+  --c-accent-400: #6366f1;
+  --c-accent-500: #4f46e5;
+  --c-accent-600: #4338ca;
+
+  --c-user-indigo: #4f46e5;
+  --c-user-violet: #7c3aed;
+  --c-user-cyan: #0891b2;
+  --c-user-emerald: #059669;
+  --c-user-amber: #d97706;
+  --c-user-rose: #e11d48;
+  --c-user-sky: #0284c7;
+  --c-user-fuchsia: #c026d3;
+
+  --shadow-sm: 0 1px 2px rgb(16 20 32 / 8%);
+  --shadow-md: 0 4px 12px -2px rgb(16 20 32 / 10%), 0 2px 4px -2px rgb(16 20 32 / 6%);
+  --shadow-lg: 0 16px 40px -8px rgb(16 20 32 / 16%), 0 4px 12px -4px rgb(16 20 32 / 10%);
+  --shadow-glow: 0 0 0 1px rgb(79 70 229 / 30%), 0 8px 32px -8px rgb(79 70 229 / 25%);
+}
