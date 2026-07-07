@@ -123,3 +123,54 @@
   --shadow-lg: 0 16px 40px -8px rgb(16 20 32 / 16%), 0 4px 12px -4px rgb(16 20 32 / 10%);
   --shadow-glow: 0 0 0 1px rgb(79 70 229 / 30%), 0 8px 32px -8px rgb(79 70 229 / 25%);
 }
+
+@theme inline {
+  --color-sunken: var(--c-sunken);
+  --color-base: var(--c-base);
+  --color-raised: var(--c-raised);
+  --color-overlay: var(--c-overlay);
+  --color-hover: var(--c-hover);
+  --color-active: var(--c-active);
+
+  --color-line: var(--c-border);
+  --color-line-subtle: var(--c-border-subtle);
+  --color-line-strong: var(--c-border-strong);
+
+  --color-ink: var(--c-text);
+  --color-ink-muted: var(--c-text-muted);
+  --color-ink-dim: var(--c-text-dim);
+  --color-ink-faint: var(--c-text-faint);
+  --color-ink-inverse: var(--c-text-inverse);
+
+  --color-accent-50: var(--c-accent-50);
+  --color-accent-200: var(--c-accent-200);
+  --color-accent-300: var(--c-accent-300);
+  --color-accent-400: var(--c-accent-400);
+  --color-accent-500: var(--c-accent-500);
+  --color-accent-600: var(--c-accent-600);
+  --color-accent-700: var(--c-accent-700);
+  --color-accent-contrast: var(--c-accent-contrast);
+
+  --color-success: var(--c-success);
+  --color-warning: var(--c-warning);
+  --color-danger: var(--c-danger);
+  --color-info: var(--c-info);
+
+  --font-sans:
+    'Inter Variable', 'Inter', -apple-system, BlinkMacSystemFont, 'Segoe UI', system-ui, sans-serif;
+  --font-mono: 'JetBrains Mono Variable', 'JetBrains Mono', ui-monospace, monospace;
+
+  --radius-xs: 4px;
+  --radius-sm: 6px;
+  --radius-md: 10px;
+  --radius-lg: 14px;
+  --radius-xl: 20px;
+  --radius-2xl: 28px;
+
+  --shadow-elevation-sm: var(--shadow-sm);
+  --shadow-elevation-md: var(--shadow-md);
+  --shadow-elevation-lg: var(--shadow-lg);
+  --shadow-elevation-glow: var(--shadow-glow);
+
+  --ease-smooth: var(--ease);
+}
