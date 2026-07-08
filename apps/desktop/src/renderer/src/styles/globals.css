@@ -1,0 +1,98 @@
+@import 'tailwindcss';
+
+@import '@fontsource-variable/inter/index.css';
+@import '@fontsource-variable/jetbrains-mono/index.css';
+
+@import './tokens.css';
+
+/* ──────────────────────────────────────────────────────────────────────────────
+ * Base
+ * ───────────────────────────────────────────────────────────────────────────*/
+
+@layer base {
+  * {
+    /* Native dialogs and inputs inherit the theme rather than the OS default. */
+    -webkit-tap-highlight-color: transparent;
+  }
+
+  html,
+  body,
+  #root {
+    height: 100%;
+    overflow: hidden;
+  }
+
+  body {
+    margin: 0;
+    background: var(--c-base);
+    color: var(--c-text);
+    font-family: var(--font-sans);
+    font-size: 14px;
+    line-height: 1.5;
+    /* Optical sizing and contextual alternates make Inter look like the
+       typeface it was designed to be rather than a web fallback. */
+    font-optical-sizing: auto;
+    font-feature-settings:
+      'cv05' 1,
+      'cv08' 1,
+      'ss03' 1,
+      'calt' 1;
+    -webkit-font-smoothing: antialiased;
+    text-rendering: optimizeLegibility;
+    /* Chat is a reading surface, not a document — native text selection on
+       chrome feels broken, so it is enabled per-component instead. */
+    user-select: none;
+    cursor: default;
+  }
+
+  /* An app window is not a web page: it should never bounce or rubber-band. */
+  body {
+    overscroll-behavior: none;
+  }
+
+  :focus {
+    outline: none;
+  }
+
+  /* Visible focus for keyboard users only — never a ring on a mouse click. */
+  :focus-visible {
+    outline: 2px solid var(--c-accent-400);
+    outline-offset: 2px;
+    border-radius: var(--radius-sm);
+  }
+
+  ::selection {
+    background: color-mix(in oklab, var(--c-accent-500) 35%, transparent);
+    color: var(--c-text);
+  }
+
+  button,
+  input,
+  textarea,
+  select {
+    font: inherit;
+    color: inherit;
+  }
+
+  /* Honour the OS accessibility setting without a second implementation:
+     every transition in the app funnels through these properties. */
+  @media (prefers-reduced-motion: reduce) {
+    *,
+    *::before,
+    *::after {
+      animation-duration: 0.01ms !important;
+      animation-iteration-count: 1 !important;
+      transition-duration: 0.01ms !important;
+      scroll-behavior: auto !important;
+    }
+  }
+
+  /* The in-app toggle must win over the media query above for users who want
+     motion off regardless of their OS setting. */
+  :root[data-motion='reduced'] *,
+  :root[data-motion='reduced'] *::before,
+  :root[data-motion='reduced'] *::after {
+    animation-duration: 0.01ms !important;
+    transition-duration: 0.01ms !important;
+  }
+}
