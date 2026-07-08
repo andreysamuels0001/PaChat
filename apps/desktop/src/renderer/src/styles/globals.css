@@ -96,3 +96,41 @@
     transition-duration: 0.01ms !important;
   }
 }
+
+/* ──────────────────────────────────────────────────────────────────────────────
+ * Scrollbars — thin, theme-aware, and only visible when there is overflow.
+ * ───────────────────────────────────────────────────────────────────────────*/
+
+@layer base {
+  .scroll-area {
+    scrollbar-width: thin;
+    scrollbar-color: var(--c-border-strong) transparent;
+    overscroll-behavior: contain;
+  }
+
+  .scroll-area::-webkit-scrollbar {
+    width: 10px;
+    height: 10px;
+  }
+
+  .scroll-area::-webkit-scrollbar-track {
+    background: transparent;
+  }
+
+  .scroll-area::-webkit-scrollbar-thumb {
+    background: var(--c-border);
+    border: 3px solid transparent;
+    border-radius: 999px;
+    background-clip: content-box;
+    transition: background var(--duration-fast) var(--ease);
+  }
+
+  .scroll-area:hover::-webkit-scrollbar-thumb {
+    background: var(--c-border-strong);
+    background-clip: content-box;
+  }
+
+  .scroll-area::-webkit-scrollbar-corner {
+    background: transparent;
+  }
+}
