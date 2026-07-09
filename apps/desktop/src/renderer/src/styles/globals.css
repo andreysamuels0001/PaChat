@@ -239,3 +239,105 @@
     transform: translate3d(-3%, 2%, 0) scale(0.96);
   }
 }
+
+@layer components {
+  /* Skeleton placeholder for loading history. */
+  .skeleton {
+    background: linear-gradient(
+      90deg,
+      var(--c-raised) 25%,
+      var(--c-hover) 50%,
+      var(--c-raised) 75%
+    );
+    background-size: 200% 100%;
+    animation: shimmer 1.6s linear infinite;
+  }
+
+  /* Rendered message body: the only place where author-supplied text becomes
+     markup, so the permitted elements are styled explicitly and nothing else
+     is produced by the renderer. */
+  .message-body {
+    user-select: text;
+    cursor: auto;
+    overflow-wrap: anywhere;
+    white-space: pre-wrap;
+  }
+
+  .message-body a {
+    color: var(--c-accent-300);
+    text-decoration: underline;
+    text-decoration-color: color-mix(in oklab, var(--c-accent-300) 40%, transparent);
+    text-underline-offset: 2px;
+  }
+
+  .message-body a:hover {
+    text-decoration-color: var(--c-accent-300);
+  }
+
+  .message-body code {
+    font-family: var(--font-mono);
+    font-size: 0.86em;
+    padding: 0.1em 0.36em;
+    border-radius: var(--radius-xs);
+    background: color-mix(in oklab, var(--c-text) 8%, transparent);
+    border: 1px solid var(--c-border-subtle);
+  }
+
+  .message-body pre {
+    font-family: var(--font-mono);
+    font-size: 0.86em;
+    margin: 0.5em 0;
+    padding: 0.75em 0.9em;
+    border-radius: var(--radius-md);
+    background: var(--c-sunken);
+    border: 1px solid var(--c-border-subtle);
+    overflow-x: auto;
+    white-space: pre;
+  }
+
+  .message-body pre code {
+    padding: 0;
+    border: 0;
+    background: none;
+  }
+
+  .message-body strong {
+    font-weight: 650;
+    color: var(--c-text);
+  }
+
+  .message-body em {
+    font-style: italic;
+  }
+
+  .message-body del {
+    text-decoration: line-through;
+    color: var(--c-text-dim);
+  }
+
+  .message-body blockquote {
+    margin: 0.35em 0;
+    padding-left: 0.75em;
+    border-left: 3px solid var(--c-border-strong);
+    color: var(--c-text-muted);
+  }
+
+  .message-body .mention {
+    padding: 0.05em 0.3em;
+    border-radius: var(--radius-xs);
+    font-weight: 550;
+    color: var(--c-accent-300);
+    background: color-mix(in oklab, var(--c-accent-500) 16%, transparent);
+  }
+
+  .message-body .mention-self {
+    color: var(--c-accent-50);
+    background: color-mix(in oklab, var(--c-accent-500) 40%, transparent);
+  }
+
+  .message-body mark {
+    background: color-mix(in oklab, var(--c-warning) 35%, transparent);
+    color: var(--c-text);
+    border-radius: 2px;
+  }
+}
