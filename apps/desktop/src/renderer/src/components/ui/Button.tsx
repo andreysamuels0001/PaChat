@@ -78,3 +78,43 @@ export const Button = forwardRef<HTMLButtonElement, ButtonProps>(function Button
     </button>
   );
 });
+
+export interface IconButtonProps extends ButtonHTMLAttributes<HTMLButtonElement> {
+  /** Required: an icon-only control needs an accessible name. */
+  label: string;
+  variant?: Variant;
+  size?: 'xs' | 'sm' | 'md';
+  active?: boolean;
+}
+
+const ICON_SIZES = {
+  xs: 'size-6 rounded-sm [&>svg]:size-3.5',
+  sm: 'size-7 rounded-sm [&>svg]:size-4',
+  md: 'size-9 rounded-md [&>svg]:size-[18px]',
+} as const;
+
+export const IconButton = forwardRef<HTMLButtonElement, IconButtonProps>(function IconButton(
+  { label, variant = 'ghost', size = 'sm', active, className, children, ...rest },
+  ref,
+) {
+  return (
+    <button
+      ref={ref}
+      aria-label={label}
+      title={label}
+      aria-pressed={active}
+      className={cn(
+        'no-drag inline-flex shrink-0 items-center justify-center',
+        'transition-[background-color,color] duration-(--duration-fast) ease-(--ease-smooth)',
+        'disabled:cursor-not-allowed disabled:opacity-40',
+        ICON_SIZES[size],
+        VARIANTS[variant],
+        active && 'bg-accent-500/15 text-accent-300 hover:bg-accent-500/20',
+        className,
+      )}
+      {...rest}
+    >
+      {children}
+    </button>
+  );
+});
