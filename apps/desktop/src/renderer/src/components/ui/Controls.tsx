@@ -40,3 +40,61 @@ export function Switch({
     </button>
   );
 }
+
+/* ─────────────────────────────────────────────────────────── Segmented ────*/
+
+export interface SegmentedOption<T extends string> {
+  value: T;
+  label: string;
+  icon?: ReactNode;
+}
+
+/**
+ * A compact exclusive choice. Used instead of a select for small option sets,
+ * because seeing every option at once is faster than opening a menu and the
+ * states are discoverable without a click.
+ */
+export function Segmented<T extends string>({
+  options,
+  value,
+  onChange,
+  size = 'md',
+}: {
+  options: Array<SegmentedOption<T>>;
+  value: T;
+  onChange: (next: T) => void;
+  size?: 'sm' | 'md';
+}) {
+  return (
+    <div
+      role="radiogroup"
+      className={cn(
+        'no-drag inline-flex items-center gap-0.5 rounded-md border border-line bg-sunken/60 p-0.5',
+      )}
+    >
+      {options.map((option) => {
+        const selected = option.value === value;
+        return (
+          <button
+            key={option.value}
+            type="button"
+            role="radio"
+            aria-checked={selected}
+            onClick={() => onChange(option.value)}
+            className={cn(
+              'inline-flex items-center gap-1.5 rounded-sm font-medium',
+              'transition-colors duration-(--duration-fast) ease-(--ease-smooth)',
+              size === 'sm' ? 'h-6 px-2 text-[11.5px]' : 'h-7 px-2.5 text-[12.5px]',
+              selected
+                ? 'bg-raised text-ink shadow-elevation-sm'
+                : 'text-ink-dim hover:text-ink-muted',
+            )}
+          >
+            {option.icon && <span className="[&>svg]:size-3.5">{option.icon}</span>}
+            {option.label}
+          </button>
+        );
+      })}
+    </div>
+  );
+}
