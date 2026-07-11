@@ -87,3 +87,47 @@ export const TextField = forwardRef<HTMLInputElement, TextFieldProps>(function T
     </div>
   );
 });
+
+/** Section heading used inside dialogs and the settings panel. */
+export function FieldGroup({
+  title,
+  description,
+  children,
+}: {
+  title: string;
+  description?: string;
+  children: ReactNode;
+}) {
+  return (
+    <section className="flex flex-col gap-3">
+      <header className="flex flex-col gap-0.5">
+        <h3 className="text-[13px] font-semibold tracking-tight text-ink">{title}</h3>
+        {description && <p className="text-[12.5px] leading-relaxed text-ink-dim">{description}</p>}
+      </header>
+      <div className="flex flex-col gap-3">{children}</div>
+    </section>
+  );
+}
+
+/** A labelled row with its control right-aligned — the settings list pattern. */
+export function SettingRow({
+  title,
+  description,
+  control,
+}: {
+  title: string;
+  description?: string;
+  control: ReactNode;
+}) {
+  return (
+    <div className="flex items-start justify-between gap-6 rounded-md px-3 py-2.5 hover:bg-hover/50">
+      <div className="min-w-0 flex-1">
+        <p className="text-[13px] font-medium text-ink">{title}</p>
+        {description && (
+          <p className="mt-0.5 text-[12px] leading-relaxed text-ink-dim">{description}</p>
+        )}
+      </div>
+      <div className="shrink-0 pt-0.5">{control}</div>
+    </div>
+  );
+}
