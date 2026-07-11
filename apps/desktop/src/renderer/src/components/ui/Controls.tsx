@@ -98,3 +98,73 @@ export function Segmented<T extends string>({
     </div>
   );
 }
+
+/* ─────────────────────────────────────────────────────────────── Tooltip ───*/
+
+type Placement = 'top' | 'bottom' | 'left' | 'right';
+
+const PLACEMENT: Record<Placement, string> = {
+  top: 'bottom-full left-1/2 -translate-x-1/2 mb-1.5',
+  bottom: 'top-full left-1/2 -translate-x-1/2 mt-1.5',
+  left: 'right-full top-1/2 -translate-y-1/2 mr-1.5',
+  right: 'left-full top-1/2 -translate-y-1/2 ml-1.5',
+};
+
+/**
+ * A CSS-only tooltip with a short open delay.
+ *
+ * No portal and no positioning library: everything it labels in this app sits
+ * well inside the window, so absolute placement relative to the trigger is
+ * both sufficient and free of layout thrash. The delay stops tooltips flashing
+ * as the pointer crosses a toolbar.
+ */
+export function Tooltip({
+  content,
+  placement = 'top',
+  shortcut,
+  children,
+}: {
+  content: string;
+  placement?: Placement;
+  shortcut?: string;
+  children: ReactNode;
+}) {
+  const [open, setOpen] = useState(false);
+  const [timer, setTimer] = useState<number | null>(null);
+
+  const show = (): void => {
+    const handle = window.setTimeout(() => setOpen(true), 380);
+    setTimer(handle);
+  };
+
+  const hide = (): void => {
+    if (timer) window.clearTimeout(timer);
+    setTimer(null);
+    setOpen(false);
+  };
+
+  return (
+    <span
+      className="relative inline-flex"
+      onPointerEnter={show}
+      onPointerLeave={hide}
+      onPointerDown={hide}
+    >
+      {children}
+      {open && (
+        <span
+          role="tooltip"
+          className={cn(
+            'pointer-events-none absolute z-50 flex items-center gap-1.5 whitespace-nowrap',
+            'rounded-sm border border-line bg-overlay px-2 py-1 text-[11.5px] font-medium',
+            'text-ink shadow-elevation-md',
+            PLACEMENT[placement],
+          )}
+        >
+          {content}
+          {shortcut && <Kbd>{shortcut}</Kbd>}
+        </span>
+      )}
+    </span>
+  );
+}
