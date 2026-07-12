@@ -168,3 +168,24 @@ export function Tooltip({
     </span>
   );
 }
+
+/** Keyboard shortcut chip. */
+export function Kbd({ children }: { children: ReactNode }) {
+  return (
+    <kbd
+      className={cn(
+        'inline-flex h-[18px] min-w-[18px] items-center justify-center rounded-xs',
+        'border border-line-strong bg-sunken px-1 font-sans text-[10.5px] font-semibold',
+        'text-ink-dim',
+      )}
+    >
+      {children}
+    </kbd>
+  );
+}
+
+/** Formats a shortcut for the host platform — ⌘ on macOS, Ctrl elsewhere. */
+export function shortcut(keys: string): string {
+  const isMac = navigator.platform.toLowerCase().includes('mac');
+  return keys.replace(/Mod/g, isMac ? '⌘' : 'Ctrl').replace(/Alt/g, isMac ? '⌥' : 'Alt');
+}
