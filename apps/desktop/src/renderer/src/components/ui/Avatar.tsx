@@ -105,3 +105,41 @@ export function Avatar({ user, size = 'md', showPresence = false, className }: A
     </div>
   );
 }
+
+/** Overlapping avatars, used for direct-message rows and member summaries. */
+export function AvatarStack({
+  users,
+  size = 'sm',
+  max = 3,
+}: {
+  users: AvatarProps['user'][];
+  size?: AvatarSize;
+  max?: number;
+}) {
+  const shown = users.slice(0, max);
+  const overflow = users.length - shown.length;
+
+  return (
+    <div className="flex items-center">
+      {shown.map((user, index) => (
+        <div
+          key={`${user.displayName}-${index}`}
+          className={cn(index > 0 && '-ml-2', 'rounded-full ring-2 ring-base')}
+        >
+          <Avatar user={user} size={size} />
+        </div>
+      ))}
+      {overflow > 0 && (
+        <div
+          className={cn(
+            '-ml-2 flex items-center justify-center rounded-full bg-hover',
+            'text-[10px] font-semibold text-ink-dim ring-2 ring-base',
+            SIZES[size].box,
+          )}
+        >
+          +{overflow}
+        </div>
+      )}
+    </div>
+  );
+}
