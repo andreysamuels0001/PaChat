@@ -143,3 +143,12 @@ export function AvatarStack({
     </div>
   );
 }
+
+export const presenceLabel: Record<PresenceState, string> = {
+  online: 'Online',
+  away: 'Away',
+  busy: 'Busy',
+  offline: 'Offline',
+};
+
+export { PRESENCE_BG, ACCENT_BG };
