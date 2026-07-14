@@ -40,3 +40,39 @@ export function MessageSkeleton({ rows = 6 }: { rows?: number }) {
     </div>
   );
 }
+
+/* ────────────────────────────────────────────────────────── EmptyState ────*/
+
+export function EmptyState({
+  icon,
+  title,
+  description,
+  action,
+}: {
+  icon?: ReactNode;
+  title: string;
+  description?: string;
+  action?: ReactNode;
+}) {
+  return (
+    <div className="flex h-full flex-col items-center justify-center gap-4 px-8 text-center">
+      {icon && (
+        <div
+          className={cn(
+            'flex size-14 items-center justify-center rounded-2xl',
+            'border border-line-subtle bg-raised text-ink-dim [&>svg]:size-6',
+          )}
+        >
+          {icon}
+        </div>
+      )}
+      <div className="max-w-sm">
+        <h3 className="text-[14.5px] font-semibold tracking-tight text-ink">{title}</h3>
+        {description && (
+          <p className="mt-1.5 text-[13px] leading-relaxed text-ink-dim">{description}</p>
+        )}
+      </div>
+      {action}
+    </div>
+  );
+}
