@@ -149,3 +149,33 @@ export function Toaster() {
     </div>
   );
 }
+
+/* ──────────────────────────────────────────────────────────────── Badge ───*/
+
+export function Badge({
+  count,
+  tone = 'accent',
+  className,
+}: {
+  count: number;
+  tone?: 'accent' | 'danger' | 'neutral';
+  className?: string;
+}) {
+  if (count <= 0) return null;
+
+  return (
+    <span
+      className={cn(
+        'inline-flex h-[18px] min-w-[18px] items-center justify-center rounded-full px-1.5',
+        'text-[10.5px] font-bold tabular-nums',
+        tone === 'accent' && 'bg-accent-500 text-white',
+        tone === 'danger' && 'bg-danger text-black/85',
+        tone === 'neutral' && 'bg-hover text-ink-muted',
+        className,
+      )}
+    >
+      {/* Cap the label so a long-neglected channel cannot widen the sidebar. */}
+      {count > 99 ? '99+' : count}
+    </span>
+  );
+}
