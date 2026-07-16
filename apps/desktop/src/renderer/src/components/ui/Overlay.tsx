@@ -147,3 +147,69 @@ export function Modal({
     </AnimatePresence>
   );
 }
+
+/**
+ * A contextual popover anchored to its trigger. Closes on an outside click or
+ * Escape — the two gestures users try first.
+ */
+export function Popover({
+  open,
+  onClose,
+  align = 'end',
+  side = 'top',
+  children,
+}: {
+  open: boolean;
+  onClose: () => void;
+  align?: 'start' | 'end' | 'center';
+  side?: 'top' | 'bottom';
+  children: ReactNode;
+}) {
+  const ref = useRef<HTMLDivElement>(null);
+
+  useEffect(() => {
+    if (!open) return;
+
+    const onPointerDown = (event: PointerEvent): void => {
+      if (!ref.current?.contains(event.target as Node)) onClose();
+    };
+    const onKeyDown = (event: KeyboardEvent): void => {
+      if (event.key === 'Escape') onClose();
+    };
+
+    // Capture phase so the popover closes before the click reaches whatever is
+    // underneath it, preventing a close-and-immediately-reopen flicker.
+    document.addEventListener('pointerdown', onPointerDown, true);
+    document.addEventListener('keydown', onKeyDown);
+    return () => {
+      document.removeEventListener('pointerdown', onPointerDown, true);
+      document.removeEventListener('keydown', onKeyDown);
+    };
+  }, [open, onClose]);
+
+  return (
+    <AnimatePresence>
+      {open && (
+        <motion.div
+          ref={ref}
+          className={cn(
+            'absolute z-50 overflow-hidden rounded-lg border border-line glass',
+            'shadow-elevation-lg',
+            side === 'top' ? 'bottom-full mb-2' : 'top-full mt-2',
+            align === 'end'
+              ? 'right-0'
+              : align === 'start'
+                ? 'left-0'
+                : 'left-1/2 -translate-x-1/2',
+          )}
+          initial={{ opacity: 0, y: side === 'top' ? 4 : -4, scale: 0.98 }}
+          animate={{ opacity: 1, y: 0, scale: 1 }}
+          exit={{ opacity: 0, y: side === 'top' ? 2 : -2, scale: 0.99 }}
+          transition={{ duration: 0.13, ease: [0.22, 1, 0.36, 1] }}
+        >
+          {children}
+        </motion.div>
+      )}
+    </AnimatePresence>
+  );
+}
