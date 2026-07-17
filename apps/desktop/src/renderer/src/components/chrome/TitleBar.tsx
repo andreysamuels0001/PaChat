@@ -89,3 +89,32 @@ export function TitleBar() {
     </header>
   );
 }
+
+function WindowButton({
+  label,
+  onClick,
+  danger,
+  children,
+}: {
+  label: string;
+  onClick: () => void;
+  danger?: boolean;
+  children: React.ReactNode;
+}) {
+  return (
+    <Tooltip content={label} placement="bottom">
+      <button
+        type="button"
+        aria-label={label}
+        onClick={onClick}
+        className={cn(
+          'no-drag flex h-7 w-10 items-center justify-center rounded-sm text-ink-dim',
+          'transition-colors duration-(--duration-fast)',
+          danger ? 'hover:bg-danger hover:text-white' : 'hover:bg-hover hover:text-ink',
+        )}
+      >
+        {children}
+      </button>
+    </Tooltip>
+  );
+}
