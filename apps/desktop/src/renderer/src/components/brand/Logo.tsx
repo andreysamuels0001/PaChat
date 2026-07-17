@@ -55,3 +55,35 @@ export function Logo({ className, size = 28 }: { className?: string; size?: numb
     </svg>
   );
 }
+
+/** Mark plus wordmark, used on the auth screen and in the sidebar header. */
+export function Wordmark({
+  className,
+  size = 'md',
+}: {
+  className?: string;
+  size?: 'sm' | 'md' | 'lg';
+}) {
+  const metrics = {
+    sm: { logo: 20, text: 'text-[14px]' },
+    md: { logo: 26, text: 'text-[17px]' },
+    lg: { logo: 38, text: 'text-[26px]' },
+  }[size];
+
+  return (
+    <div className={cn('flex items-center gap-2.5 select-none', className)}>
+      <Logo size={metrics.logo} />
+      <span
+        className={cn(
+          'font-semibold tracking-[-0.02em] text-ink',
+          // The negative tracking matters more than usual here: Inter sets the
+          // capital pair "PaC" loose by default, which reads as three words
+          // rather than one at sidebar size.
+          metrics.text,
+        )}
+      >
+        PaChat
+      </span>
+    </div>
+  );
+}
