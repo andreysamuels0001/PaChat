@@ -44,3 +44,37 @@ const APPEARANCE: Partial<Record<ConnectionStatus, Appearance>> = {
     className: 'bg-danger/12 text-danger border-danger/20',
   },
 };
+
+export function ConnectionBanner() {
+  const status = useSession((s) => s.connection);
+  const appearance = APPEARANCE[status];
+
+  return (
+    <AnimatePresence initial={false}>
+      {appearance && (
+        <motion.div
+          key={status}
+          initial={{ height: 0, opacity: 0 }}
+          animate={{ height: 30, opacity: 1 }}
+          exit={{ height: 0, opacity: 0 }}
+          transition={{ duration: 0.18, ease: [0.22, 1, 0.36, 1] }}
+          className="shrink-0 overflow-hidden"
+          role="status"
+        >
+          <div
+            className={cn(
+              'flex h-[30px] items-center justify-center gap-2 border-b',
+              'text-[12px] font-medium',
+              appearance.className,
+            )}
+          >
+            <span className={cn('[&>svg]:size-3.5', appearance.spin && '[&>svg]:animate-spin')}>
+              {appearance.icon}
+            </span>
+            {appearance.message}
+          </div>
+        </motion.div>
+      )}
+    </AnimatePresence>
+  );
+}
