@@ -97,3 +97,68 @@ The online ring animates once per 2.4 s rather than continuously pulsing, so a
 member list of thirty people is not thirty things competing for attention.
 
 ---
+
+## 3 · Typography
+
+**Inter Variable** for the interface, **JetBrains Mono Variable** for code.
+Both bundled, not fetched — the app must render identically offline and on
+first launch.
+
+```css
+font-optical-sizing: auto;
+font-feature-settings:
+  'cv05' 1,
+  'cv08' 1,
+  'ss03' 1,
+  'calt' 1;
+```
+
+`ss03` gives straight-sided alternates, which is what makes a lowercase _l_
+unambiguous beside a _u_ at 11–13 px — the size most interface text actually
+renders at.
+
+### Scale
+
+| Size       | Weight  | Usage                                          |
+| :--------- | :------ | :--------------------------------------------- |
+| 10.5 px    | 600     | Section headers (uppercase, `0.06em` tracking) |
+| 11–11.5 px | 400–500 | Timestamps, metadata, hints                    |
+| 12–12.5 px | 400–500 | Secondary labels, previews, tooltips           |
+| 13–13.5 px | 400     | **Message bodies** · `line-height: 1.55`       |
+| 13.5 px    | 600     | Author names, conversation titles              |
+| 14.5 px    | 600     | Conversation header                            |
+| 20–22 px   | 600     | Dialog titles, conversation start              |
+| 40 px      | 600     | The auth screen headline                       |
+
+Negative tracking (`-0.02em` to `-0.03em`) on everything above 14 px. Inter is
+set loose by default at display sizes; tightening it is what makes a heading
+read as designed rather than as default.
+
+Message bodies use `1.55` line-height — tighter looks cramped in a dense log,
+looser breaks the visual connection between a message's own lines.
+
+---
+
+## 4 · Space and shape
+
+A **4 px base grid**, with the message gutter fixed at **32 px** (the avatar
+width) so grouped continuations align perfectly under their leading row.
+
+| Radius | Applied to                                   |
+| :----- | :------------------------------------------- |
+| 4 px   | Inline code, checkboxes, keyboard chips      |
+| 6 px   | Small buttons, menu items, tooltips          |
+| 10 px  | Inputs, the composer, file rows, attachments |
+| 14 px  | Popovers, cards                              |
+| 20 px  | Dialogs, the auth panel                      |
+| 28 px  | Icon tiles in empty states                   |
+| full   | Avatars, badges, reaction chips              |
+
+Elevation is **layered**, never a single blur — a panel reads as physically
+above the surface rather than merely darker:
+
+```css
+--shadow-md: 0 4px 12px -2px rgb(0 0 0 / 45%), 0 2px 4px -2px rgb(0 0 0 / 30%);
+```
+
+---
