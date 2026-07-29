@@ -162,3 +162,42 @@ above the surface rather than merely darker:
 ```
 
 ---
+
+## 5 · Motion
+
+One easing curve for everything:
+
+```css
+--ease: cubic-bezier(0.22, 1, 0.36, 1); /* fast out, gentle settle */
+--duration-fast: 120ms; /* colour, hover, focus */
+--duration-base: 180ms; /* panels, dialogs, toasts */
+--duration-slow: 240ms; /* layout shifts */
+```
+
+### What animates, and what does not
+
+| Animates                                                     | Does not                                               |
+| :----------------------------------------------------------- | :----------------------------------------------------- |
+| Dialog and popover entry (opacity + 8 px rise + 0.985 scale) | Message insertion — a 400-row log must not cascade     |
+| Toast entry and exit, with layout reflow                     | Theme switching — an instant flip reads as intentional |
+| The typing indicator's height                                | Scroll position (except explicit "jump to latest")     |
+| The connection banner collapsing to zero                     | Sidebar selection, which is a colour change only       |
+| The jump-to-latest pill                                      |                                                        |
+
+### Reduced motion
+
+Two independent paths, both honoured:
+
+```css
+@media (prefers-reduced-motion: reduce) {
+  /* OS setting */
+}
+:root[data-motion='reduced'] {
+  /* in-app toggle, wins over the media query */
+}
+```
+
+The in-app toggle must win in both directions, so a user who wants motion off
+regardless of their OS setting gets it.
+
+---
