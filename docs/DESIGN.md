@@ -201,3 +201,95 @@ The in-app toggle must win in both directions, so a user who wants motion off
 regardless of their OS setting gets it.
 
 ---
+
+## 6 · Component anatomy
+
+### Message row
+
+```
+┌──────────────────────────────────────────────── hover toolbar (absolute,
+│                                                  overlapping the row above
+│  ┌────┐  Ada Lovelace  Principal Engineer  09:14  so height never changes)
+│  │ AL │  Decision: keyset pagination on message ids
+│  └────┘  instead of offset.
+│   32px   ┌──────────────────────────────────┐
+│  gutter  │  code block, sunken surface      │
+│          └──────────────────────────────────┘
+│          [🔥 2] [✅ 1]   ← reaction chips, mine outlined in accent
+└──────────────────────────────────────────────
+```
+
+**Grouped continuation** keeps the same 32 px gutter but replaces the avatar
+with a hover-only timestamp, so a run of messages forms one clean text column.
+
+The hover toolbar is absolutely positioned and overlaps the row above. Reserving
+space for it would add 32 px of permanent whitespace between every message;
+letting it change the row height on hover would make the log jitter under the
+pointer.
+
+### Sidebar row
+
+Active state is a **short left bar** (16 px tall, 2.5 px wide) plus a 14%
+accent wash — not a full-height border, which reads as a divider rather than a
+selection.
+
+Unread uses weight (`600` vs `500`) _and_ a badge. Weight alone is too subtle
+at 13.5 px; a badge alone does not survive a glance down the list.
+
+### Composer
+
+Reply context attaches **above** the input with its bottom border removed, so
+the two read as one object. Drag-over switches the whole surface to an accent
+border with a centred label rather than showing a separate drop zone.
+
+The character counter appears only below 240 remaining, and turns red below 40.
+A permanently visible counter on a 4000-character limit is pure noise.
+
+### Empty states
+
+Icon tile, title, one sentence of description, and at most one action. The
+description says what to _do_, not that nothing is there — the empty surface
+already communicates that.
+
+---
+
+## 7 · Accessibility
+
+| Concern             | Approach                                                                                                                                               |
+| :------------------ | :----------------------------------------------------------------------------------------------------------------------------------------------------- |
+| Focus               | `:focus-visible` only — a visible ring for keyboard users, never on a mouse click. 2 px accent outline, 2 px offset.                                   |
+| Dialogs             | Escape closes, focus moves inside on open and returns to the trigger on close, Tab is trapped within the panel.                                        |
+| Icon-only controls  | A `label` prop is **required** by the `IconButton` type; there is no way to render one without an accessible name.                                     |
+| Live regions        | Toasts and the typing indicator are `aria-live="polite"` — a toast never blocks progress, so interrupting a screen reader would be worse than waiting. |
+| Switches            | Real `role="switch"` with `aria-checked`, not a styled checkbox.                                                                                       |
+| Contrast            | `ink` on `base` exceeds 7:1 in both themes; `ink-dim` exceeds 4.5:1. `ink-faint` is reserved for text that is decorative or duplicated elsewhere.      |
+| Colour independence | Presence is colour _and_ position; unread is weight _and_ a badge; failed sends carry an icon _and_ text.                                              |
+| Keyboard            | Every action reachable by mouse has a shortcut or a menu item.                                                                                         |
+
+---
+
+## 8 · Implementation
+
+Tokens are declared once as raw CSS custom properties on `:root`, then mapped
+into Tailwind's namespace with `@theme inline`:
+
+```css
+:root {
+  --c-base: #0b0c10;
+}
+:root[data-theme='light'] {
+  --c-base: #f7f8fa;
+}
+
+@theme inline {
+  --color-base: var(--c-base);
+}
+```
+
+`@theme inline` is the important detail: it inlines the `var()` reference
+rather than copying the resolved colour, which is what lets `bg-base` follow a
+runtime theme change. Flipping `data-theme` on `<html>` re-themes the entire
+application with no re-render and no JavaScript beyond setting the attribute.
+
+The native window frame is repainted in the same action, so the titlebar never
+disagrees with the content beneath it.
