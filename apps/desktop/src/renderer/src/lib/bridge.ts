@@ -96,3 +96,9 @@ function createWebFallback(): PaChatBridge {
 }
 
 export const bridge: PaChatBridge = window.pachat ?? createWebFallback();
+
+/** Keys used in the OS credential vault. */
+export const SECRET_KEYS = {
+  refreshToken: 'refresh-token',
+  lastIdentifier: 'last-identifier',
+} as const;
