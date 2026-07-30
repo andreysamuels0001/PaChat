@@ -97,3 +97,75 @@ async function request<T>(path: string, options: RequestOptions = {}): Promise<T
     clearTimeout(timer);
   }
 }
+
+/* ──────────────────────────────────────────────────────────────────────────── */
+
+export const api = {
+  health: (): Promise<HealthResponse> => request(ROUTES.health),
+
+  register: (input: RegisterInput): Promise<AuthResponse> =>
+    request(ROUTES.register, { method: 'POST', body: input }),
+
+  login: (input: LoginInput): Promise<AuthResponse> =>
+    request(ROUTES.login, { method: 'POST', body: input }),
+
+  refresh: (refreshToken: string): Promise<AuthResponse> =>
+    request(ROUTES.refresh, { method: 'POST', body: { refreshToken } }),
+
+  logout: (refreshToken: string): Promise<void> =>
+    request(ROUTES.logout, { method: 'POST', body: { refreshToken } }),
+
+  me: (accessToken: string): Promise<{ self: Self }> => request(ROUTES.me, { accessToken }),
+
+  /**
+   * Uploads attachments, reporting progress.
+   *
+   * `XMLHttpRequest` rather than `fetch` purely because it exposes upload
+   * progress events — `fetch` still cannot report how much of a request body
+   * has been sent, and a 25 MiB attachment with no progress bar feels broken.
+   */
+  upload(
+    files: File[],
+    accessToken: string,
+    onProgress?: (fraction: number) => void,
+  ): Promise<UploadResponse> {
+    return new Promise((resolve, reject) => {
+      const form = new FormData();
+      for (const file of files) form.append('files', file, file.name);
+
+      const xhr = new XMLHttpRequest();
+      xhr.open('POST', `${baseUrl()}${ROUTES.upload}`);
+      xhr.setRequestHeader('Authorization', `Bearer ${accessToken}`);
+      xhr.responseType = 'json';
+
+      xhr.upload.addEventListener('progress', (event) => {
+        if (event.lengthComputable && onProgress) onProgress(event.loaded / event.total);
+      });
+
+      xhr.addEventListener('load', () => {
+        if (xhr.status >= 200 && xhr.status < 300) {
+          resolve(xhr.response as UploadResponse);
+          return;
+        }
+        const error = (xhr.response as ApiError | null)?.error;
+        reject(
+          new ApiRequestError(
+            xhr.status,
+            error?.code ?? 'UPLOAD_FAILED',
+            error?.message ?? 'Upload failed',
+            error?.fields,
+          ),
+        );
+      });
+
+      xhr.addEventListener('error', () =>
+        reject(new ApiRequestError(0, 'NETWORK', 'Could not reach the PaChat server')),
+      );
+      xhr.addEventListener('abort', () =>
+        reject(new ApiRequestError(0, 'ABORTED', 'Upload cancelled')),
+      );
+
+      xhr.send(form);
+    });
+  },
+};
