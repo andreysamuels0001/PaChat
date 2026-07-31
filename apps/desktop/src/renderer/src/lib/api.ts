@@ -169,3 +169,16 @@ export const api = {
     });
   },
 };
+
+/**
+ * Resolves a server-relative attachment path into a loadable URL.
+ *
+ * The access token is appended as a query parameter because `<img src>` cannot
+ * carry an Authorization header. The server restricts that fallback to GET
+ * requests, so a leaked URL cannot be used to change anything.
+ */
+export function fileUrl(path: string, accessToken: string | null): string {
+  const url = `${baseUrl()}${path}`;
+  if (!accessToken) return url;
+  return `${url}${url.includes('?') ? '&' : '?'}token=${encodeURIComponent(accessToken)}`;
+}
