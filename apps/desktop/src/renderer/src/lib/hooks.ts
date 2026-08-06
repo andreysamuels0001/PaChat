@@ -126,3 +126,44 @@ export function useOnReachTop(
     return () => element.removeEventListener('scroll', onScroll);
   }, [containerRef, enabled, offset]);
 }
+
+/** Re-renders on an interval — used by relative timestamps. */
+export function useTicker(intervalMs = 30_000): number {
+  const [tick, setTick] = useState(() => Date.now());
+
+  useEffect(() => {
+    const timer = window.setInterval(() => setTick(Date.now()), intervalMs);
+    return () => window.clearInterval(timer);
+  }, [intervalMs]);
+
+  return tick;
+}
+
+/** Debounces a value — used for search-as-you-type. */
+export function useDebounced<T>(value: T, delayMs = 220): T {
+  const [debounced, setDebounced] = useState(value);
+
+  useEffect(() => {
+    const timer = window.setTimeout(() => setDebounced(value), delayMs);
+    return () => window.clearTimeout(timer);
+  }, [value, delayMs]);
+
+  return debounced;
+}
+
+/** Grows a textarea to fit its content, up to a maximum height. */
+export function useAutoResize(
+  ref: React.RefObject<HTMLTextAreaElement | null>,
+  value: string,
+  maxHeight = 220,
+): void {
+  useLayoutEffect(() => {
+    const element = ref.current;
+    if (!element) return;
+    // Reset before measuring: scrollHeight only shrinks if the element is
+    // allowed to collapse first.
+    element.style.height = 'auto';
+    element.style.height = `${Math.min(element.scrollHeight, maxHeight)}px`;
+    element.style.overflowY = element.scrollHeight > maxHeight ? 'auto' : 'hidden';
+  }, [ref, value, maxHeight]);
+}
