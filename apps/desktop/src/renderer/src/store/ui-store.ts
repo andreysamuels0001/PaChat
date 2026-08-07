@@ -67,3 +67,82 @@ function paintMotion(reduce: boolean): void {
   if (reduce) document.documentElement.dataset.motion = 'reduced';
   else delete document.documentElement.dataset.motion;
 }
+
+const TOAST_TTL_MS = 5_000;
+
+export const useUi = create<UiState>()((set, get) => ({
+  theme: 'dark',
+  compact: false,
+  reduceMotion: false,
+  showMembers: true,
+  overlay: 'none',
+  windowMaximised: false,
+  windowFocused: true,
+  toasts: [],
+  replyTo: null,
+  editing: null,
+
+  setTheme(theme) {
+    paintTheme(theme);
+    set({ theme });
+  },
+
+  setCompact(compact) {
+    set({ compact });
+  },
+
+  setReduceMotion(reduceMotion) {
+    paintMotion(reduceMotion);
+    set({ reduceMotion });
+  },
+
+  toggleMembers() {
+    set((state) => ({ showMembers: !state.showMembers }));
+  },
+
+  openOverlay(overlay) {
+    set({ overlay });
+  },
+
+  closeOverlay() {
+    set({ overlay: 'none' });
+  },
+
+  setWindowMaximised(windowMaximised) {
+    set({ windowMaximised });
+  },
+
+  setWindowFocused(windowFocused) {
+    set({ windowFocused });
+  },
+
+  toast(toast) {
+    const id = createId();
+    set((state) => ({ toasts: [...state.toasts, { ...toast, id }] }));
+    // Auto-dismiss. Toasts are informational; anything requiring a decision
+    // belongs in a dialog instead.
+    window.setTimeout(() => get().dismissToast(id), TOAST_TTL_MS);
+  },
+
+  dismissToast(id) {
+    set((state) => ({ toasts: state.toasts.filter((t) => t.id !== id) }));
+  },
+
+  setReplyTo(replyTo) {
+    set({ replyTo, editing: null });
+  },
+
+  setEditing(editing) {
+    set({ editing, replyTo: null });
+  },
+
+  applyPreferences(preferences) {
+    paintTheme(preferences.theme);
+    paintMotion(preferences.reduceMotion);
+    set({
+      theme: preferences.theme,
+      compact: preferences.compactDensity,
+      reduceMotion: preferences.reduceMotion,
+    });
+  },
+}));
