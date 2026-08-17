@@ -146,3 +146,15 @@ export const useUi = create<UiState>()((set, get) => ({
     });
   },
 }));
+
+/**
+ * Follows the OS theme while the app is set to "system". Registered once at
+ * module scope rather than in a component, so the listener cannot be
+ * duplicated by a remount.
+ */
+if (typeof window !== 'undefined' && window.matchMedia) {
+  window.matchMedia('(prefers-color-scheme: light)').addEventListener('change', () => {
+    const { theme } = useUi.getState();
+    if (theme === 'system') paintTheme('system');
+  });
+}
