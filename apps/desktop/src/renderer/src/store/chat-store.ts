@@ -101,3 +101,10 @@ function mergeMessage(list: Message[], message: Message): Message[] {
   next.splice(insertAt < 0 ? list.length : insertAt, 0, message);
   return next;
 }
+
+/** Caps retained history so a long-lived session cannot grow without bound. */
+const MAX_RETAINED = 400;
+
+function trim(list: Message[]): Message[] {
+  return list.length > MAX_RETAINED ? list.slice(list.length - MAX_RETAINED) : list;
+}
