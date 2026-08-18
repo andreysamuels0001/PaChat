@@ -329,3 +329,44 @@ export const useChat = create<ChatState>()((set, get) => ({
     });
   },
 }));
+
+/**
+ * The signed-in member's id, read lazily to avoid a circular import between
+ * the two stores at module-evaluation time.
+ */
+function currentUserId(): string | null {
+  return (globalThis as { __pachatSelfId?: string | null }).__pachatSelfId ?? null;
+}
+
+/** Published by the realtime layer whenever the session identity changes. */
+export function publishSelfId(id: string | null): void {
+  (globalThis as { __pachatSelfId?: string | null }).__pachatSelfId = id;
+}
+
+/* ──────────────────────────────────────────────────────────── selectors ────*/
+
+export const makeNonce = createNonce;
+
+/** Pinned first, then by most recent activity — matching the server's order. */
+export function selectOrderedConversations(state: ChatState): Conversation[] {
+  return [...state.conversations.values()].sort((a, b) => {
+    if (a.isPinned !== b.isPinned) return a.isPinned ? -1 : 1;
+    const aTime = a.lastMessage?.createdAt ?? a.updatedAt;
+    const bTime = b.lastMessage?.createdAt ?? b.updatedAt;
+    return bTime - aTime;
+  });
+}
+
+export function selectActiveConversation(state: ChatState): Conversation | null {
+  return state.activeConversationId
+    ? (state.conversations.get(state.activeConversationId) ?? null)
+    : null;
+}
+
+export function selectTotalUnread(state: ChatState): number {
+  let total = 0;
+  for (const conversation of state.conversations.values()) {
+    if (!conversation.isMuted) total += conversation.unreadCount;
+  }
+  return total;
+}
