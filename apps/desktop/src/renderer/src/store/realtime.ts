@@ -73,3 +73,90 @@ function requireClient(): RealtimeClient {
   if (!client) throw new RealtimeError({ code: 'INTERNAL_ERROR', message: 'Not connected' });
   return client;
 }
+
+/* ─────────────────────────────────────────────────────── inbound bindings ──*/
+
+function bindServerEvents(): void {
+  const socket = requireClient();
+  const chat = useChat.getState;
+  const session = useSession.getState;
+
+  unsubscribers.push(
+    socket.on('session:ready', (payload) => {
+      publishSelfId(payload.self.id);
+      session().patchSelf(payload.self);
+      useUi.getState().applyPreferences(payload.self.preferences);
+      chat().applyBootstrap({
+        conversations: payload.conversations,
+        users: payload.users,
+      });
+
+      // Reopen whatever the viewer was reading, or fall back to the most
+      // recently active conversation so the app never lands on a blank pane.
+      const current = chat().activeConversationId;
+      const target = current ?? payload.conversations[0]?.id ?? null;
+      if (target) void openConversation(target);
+    }),
+
+    socket.on('session:revoked', ({ reason }) => {
+      useUi.getState().toast({ tone: 'warning', title: 'Signed out', description: reason });
+      void session().signOut();
+    }),
+
+    socket.on('conversation:upserted', ({ conversation }) => {
+      chat().upsertConversation(conversation);
+      syncBadge();
+    }),
+
+    socket.on('conversation:removed', ({ conversationId }) => {
+      chat().removeConversation(conversationId);
+      syncBadge();
+    }),
+
+    socket.on('conversation:members', ({ conversationId, members }) => {
+      chat().setMembers(conversationId, members);
+    }),
+
+    socket.on('user:upserted', ({ user }) => {
+      chat().upsertUser(user);
+      // The viewer's own record also carries their private preferences, which
+      // must follow them across devices.
+      const self = session().self;
+      if (self && user.id === self.id) {
+        session().patchSelf({ ...self, ...user } as Self);
+      }
+    }),
+
+    socket.on('presence:changed', ({ userId, presence }) => {
+      const existing = chat().users.get(userId);
+      if (existing) chat().upsertUser({ ...existing, presence });
+    }),
+
+    socket.on('message:created', ({ message, nonce }) => {
+      chat().receiveMessage(message, nonce);
+      announce(message);
+      // Reading a conversation that is already open should not accumulate
+      // unread state behind the viewer's back.
+      if (isViewing(message.conversationId) && useUi.getState().windowFocused) {
+        void markRead(message.conversationId, message.createdAt);
+      }
+    }),
+
+    socket.on('message:updated', ({ message }) => chat().replaceMessage(message)),
+    socket.on('message:deleted', ({ message }) => chat().replaceMessage(message)),
+
+    socket.on('typing:changed', ({ conversationId, userIds }) => {
+      const selfId = session().self?.id;
+      chat().setTyping(
+        conversationId,
+        userIds.filter((id) => id !== selfId),
+      );
+    }),
+
+    socket.on('read:changed', (receipt) => chat().applyReceipt(receipt)),
+
+    socket.on('server:error', (error) => {
+      useUi.getState().toast({ tone: 'danger', title: 'Server error', description: error.message });
+    }),
+  );
+}
