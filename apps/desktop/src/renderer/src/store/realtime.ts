@@ -160,3 +160,46 @@ function bindServerEvents(): void {
     }),
   );
 }
+
+const isViewing = (conversationId: string): boolean =>
+  useChat.getState().activeConversationId === conversationId;
+
+/* ───────────────────────────────────────────────────────── notifications ───*/
+
+/**
+ * Decides whether an incoming message deserves the user's attention.
+ *
+ * Four conditions must all hold: it is not the viewer's own message, the
+ * conversation is not muted, the viewer is not already looking at it in a
+ * focused window, and notifications are enabled. Anything less and a busy
+ * channel becomes an unusable stream of toasts.
+ */
+function announce(message: Message): void {
+  const session = useSession.getState();
+  const chat = useChat.getState();
+  const ui = useUi.getState();
+  const self = session.self;
+
+  if (!self || message.authorId === self.id) return;
+  if (message.kind === 'system') return;
+
+  const conversation = chat.conversations.get(message.conversationId);
+  if (!conversation || conversation.isMuted) return;
+  if (isViewing(message.conversationId) && ui.windowFocused) return;
+  if (!self.preferences.desktopNotifications) return;
+
+  const author = chat.users.get(message.authorId);
+  const title =
+    conversation.kind === 'direct'
+      ? (author?.displayName ?? 'New message')
+      : `#${conversation.name ?? 'channel'} · ${author?.displayName ?? 'Someone'}`;
+
+  bridge.notifications.show({
+    title,
+    body: truncate(messagePreview(message) || 'Sent an attachment', 160),
+    conversationId: message.conversationId,
+    silent: !self.preferences.notificationSound,
+  });
+
+  syncBadge();
+}
