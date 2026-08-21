@@ -203,3 +203,12 @@ function announce(message: Message): void {
 
   syncBadge();
 }
+
+/** Mirrors the unread total onto the taskbar / dock badge. */
+function syncBadge(): void {
+  let total = 0;
+  for (const conversation of useChat.getState().conversations.values()) {
+    if (!conversation.isMuted) total += conversation.unreadCount;
+  }
+  bridge.badge.set(total);
+}
