@@ -212,3 +212,58 @@ function syncBadge(): void {
   }
   bridge.badge.set(total);
 }
+
+/* ──────────────────────────────────────────────────────────────── intents ──*/
+
+export async function openConversation(conversationId: string): Promise<void> {
+  const chat = useChat.getState();
+  chat.setActive(conversationId);
+
+  const cached = chat.history.get(conversationId);
+  if (cached?.loaded) {
+    void markReadToLatest(conversationId);
+    return;
+  }
+
+  chat.setHistoryLoading(conversationId, true);
+  try {
+    const page = await requireClient().request<{
+      conversationId: string;
+      messages: Message[];
+      hasMore: boolean;
+    }>('conversation:open', { conversationId });
+
+    chat.prependHistory(page.conversationId, page.messages, page.hasMore);
+    void markReadToLatest(conversationId);
+  } catch (error) {
+    chat.setHistoryLoading(conversationId, false);
+    report(error, 'Could not open that conversation');
+  }
+}
+
+/** Loads the page of history immediately above what is already rendered. */
+export async function loadOlderMessages(conversationId: string): Promise<void> {
+  const chat = useChat.getState();
+  const state = chat.history.get(conversationId);
+  if (state?.loading || state?.hasMore === false) return;
+
+  const oldest = chat.messages.get(conversationId)?.[0];
+  if (!oldest) return;
+
+  chat.setHistoryLoading(conversationId, true);
+  try {
+    const page = await requireClient().request<{
+      conversationId: string;
+      messages: Message[];
+      hasMore: boolean;
+    }>('history:fetch', {
+      conversationId,
+      before: oldest.id,
+      limit: LIMITS.messagePageSize,
+    });
+    chat.prependHistory(page.conversationId, page.messages, page.hasMore);
+  } catch (error) {
+    chat.setHistoryLoading(conversationId, false);
+    report(error, 'Could not load earlier messages');
+  }
+}
