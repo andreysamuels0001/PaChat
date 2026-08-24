@@ -365,3 +365,53 @@ export async function toggleReaction(messageId: string, emoji: string): Promise<
     report(error, 'Could not react to that message');
   }
 }
+
+/* ──────────────────────────────────────────────────────────────── typing ───*/
+
+let lastTypingPing = 0;
+
+/**
+ * Throttled typing signal. One event every two seconds while typing, and an
+ * immediate `false` when the composer empties — so the indicator clears the
+ * moment the user stops rather than after the server-side TTL.
+ */
+export function pingTyping(conversationId: string, isTyping: boolean): void {
+  if (!client?.connected) return;
+
+  if (!isTyping) {
+    lastTypingPing = 0;
+    client.send('typing:ping', { conversationId, isTyping: false });
+    return;
+  }
+
+  const now = Date.now();
+  if (now - lastTypingPing < TIMINGS.typingThrottleMs) return;
+  lastTypingPing = now;
+  client.send('typing:ping', { conversationId, isTyping: true });
+}
+
+/* ───────────────────────────────────────────────────────────────── reads ───*/
+
+export async function markRead(conversationId: string, readAt: number): Promise<void> {
+  if (!client?.connected) return;
+  try {
+    await client.request('read:advance', { conversationId, readAt });
+  } catch {
+    // A dropped read receipt self-heals on the next message or reconnect.
+  }
+}
+
+function markReadToLatest(conversationId: string): Promise<void> {
+  const messages = useChat.getState().messages.get(conversationId);
+  const newest = messages?.[messages.length - 1];
+  return markRead(conversationId, newest?.createdAt ?? Date.now());
+}
+
+export async function markEverythingRead(): Promise<void> {
+  const conversations = [...useChat.getState().conversations.values()];
+  await Promise.all(
+    conversations
+      .filter((c) => c.unreadCount > 0)
+      .map((c) => markRead(c.id, c.lastMessage?.createdAt ?? Date.now())),
+  );
+}
