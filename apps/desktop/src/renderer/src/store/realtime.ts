@@ -267,3 +267,76 @@ export async function loadOlderMessages(conversationId: string): Promise<void> {
     report(error, 'Could not load earlier messages');
   }
 }
+
+export interface SendOptions {
+  conversationId: string;
+  body: string;
+  attachments?: Attachment[];
+  replyToId?: string | null;
+}
+
+/**
+ * Sends a message optimistically.
+ *
+ * The bubble appears instantly as a `PendingMessage` keyed by a nonce; the
+ * server echoes that nonce back on the real message, at which point the
+ * placeholder is dropped. A failure leaves it in place marked `failed`, so the
+ * text is never lost and `retrySend` can reuse the same nonce — making the
+ * retry idempotent server-side.
+ */
+export async function sendMessage(options: SendOptions): Promise<void> {
+  const session = useSession.getState();
+  const chat = useChat.getState();
+  const self = session.self;
+  if (!self) return;
+
+  const body = options.body.trim();
+  const attachments = options.attachments ?? [];
+  if (body.length === 0 && attachments.length === 0) return;
+
+  const pending: PendingMessage = {
+    nonce: createNonce(),
+    conversationId: options.conversationId,
+    authorId: self.id,
+    body,
+    attachments,
+    replyToId: options.replyToId ?? null,
+    createdAt: Date.now(),
+    state: 'sending',
+  };
+
+  chat.addPending(pending);
+  chat.setDraft(options.conversationId, '');
+  useUi.getState().setReplyTo(null);
+
+  await deliver(pending);
+}
+
+export async function retrySend(nonce: string): Promise<void> {
+  const pending = useChat.getState().pending.find((p) => p.nonce === nonce);
+  if (!pending) return;
+  useChat.getState().failPending(nonce, '');
+  await deliver({ ...pending, state: 'sending' });
+}
+
+async function deliver(pending: PendingMessage): Promise<void> {
+  try {
+    await requireClient().request<{ message: Message; nonce: string }>('message:send', {
+      conversationId: pending.conversationId,
+      nonce: pending.nonce,
+      body: pending.body,
+      replyToId: pending.replyToId,
+      attachmentIds: pending.attachments.map((a) => a.id),
+    });
+    // The pending entry is removed by the `message:created` push, which also
+    // carries the authoritative server timestamp and id.
+  } catch (error) {
+    const message =
+      error instanceof RealtimeError ? error.message : 'Message could not be delivered';
+    useChat.getState().failPending(pending.nonce, message);
+  }
+}
+
+export function discardPending(nonce: string): void {
+  useChat.getState().dropPending(nonce);
+}
