@@ -340,3 +340,28 @@ async function deliver(pending: PendingMessage): Promise<void> {
 export function discardPending(nonce: string): void {
   useChat.getState().dropPending(nonce);
 }
+
+export async function editMessage(messageId: string, body: string): Promise<void> {
+  try {
+    await requireClient().request('message:edit', { messageId, body: body.trim() });
+    useUi.getState().setEditing(null);
+  } catch (error) {
+    report(error, 'Could not edit that message');
+  }
+}
+
+export async function deleteMessage(messageId: string): Promise<void> {
+  try {
+    await requireClient().request('message:delete', { messageId });
+  } catch (error) {
+    report(error, 'Could not delete that message');
+  }
+}
+
+export async function toggleReaction(messageId: string, emoji: string): Promise<void> {
+  try {
+    await requireClient().request('message:react', { messageId, emoji });
+  } catch (error) {
+    report(error, 'Could not react to that message');
+  }
+}
