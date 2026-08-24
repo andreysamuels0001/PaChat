@@ -415,3 +415,79 @@ export async function markEverythingRead(): Promise<void> {
       .map((c) => markRead(c.id, c.lastMessage?.createdAt ?? Date.now())),
   );
 }
+
+/* ─────────────────────────────────────────────────────────── conversations ─*/
+
+export async function createChannel(input: CreateChannelInput): Promise<Conversation | null> {
+  try {
+    const result = await requireClient().request<{ conversation: Conversation }>(
+      'conversation:create',
+      input,
+    );
+    useChat.getState().upsertConversation(result.conversation);
+    await openConversation(result.conversation.id);
+    useUi.getState().toast({
+      tone: 'success',
+      title: `#${result.conversation.name} created`,
+    });
+    return result.conversation;
+  } catch (error) {
+    report(error, 'Could not create that channel');
+    return null;
+  }
+}
+
+export async function openDirectMessage(userId: string): Promise<void> {
+  try {
+    const result = await requireClient().request<{ conversation: Conversation }>(
+      'conversation:direct',
+      { userId },
+    );
+    useChat.getState().upsertConversation(result.conversation);
+    await openConversation(result.conversation.id);
+  } catch (error) {
+    report(error, 'Could not open that conversation');
+  }
+}
+
+export async function setConversationFlags(
+  conversationId: string,
+  flags: { muted?: boolean; pinned?: boolean },
+): Promise<void> {
+  try {
+    const result = await requireClient().request<{ conversation: Conversation }>(
+      'conversation:flags',
+      { conversationId, ...flags },
+    );
+    useChat.getState().upsertConversation(result.conversation);
+    syncBadge();
+  } catch (error) {
+    report(error, 'Could not update that conversation');
+  }
+}
+
+export async function leaveConversation(conversationId: string): Promise<void> {
+  try {
+    await requireClient().request('conversation:leave', { conversationId });
+    useChat.getState().removeConversation(conversationId);
+  } catch (error) {
+    report(error, 'Could not leave that channel');
+  }
+}
+
+/* ──────────────────────────────────────────────────────────────── identity ─*/
+
+export async function setPresence(
+  state: 'online' | 'away' | 'busy',
+  message?: string | null,
+): Promise<void> {
+  try {
+    const result = await requireClient().request<{ self: Self }>('presence:set', {
+      state,
+      message,
+    });
+    useSession.getState().patchSelf(result.self);
+  } catch (error) {
+    report(error, 'Could not update your status');
+  }
+}
