@@ -491,3 +491,72 @@ export async function setPresence(
     report(error, 'Could not update your status');
   }
 }
+
+export async function updateProfile(input: UpdateProfileInput): Promise<void> {
+  try {
+    const result = await requireClient().request<{ self: Self }>('profile:update', input);
+    useSession.getState().patchSelf(result.self);
+    useUi.getState().toast({ tone: 'success', title: 'Profile updated' });
+  } catch (error) {
+    report(error, 'Could not update your profile');
+  }
+}
+
+export async function updatePreferences(patch: Partial<Preferences>): Promise<void> {
+  // Applied locally first so a toggle responds instantly; the server round-trip
+  // only confirms what the user already sees.
+  const self = useSession.getState().self;
+  if (self) useUi.getState().applyPreferences({ ...self.preferences, ...patch });
+
+  try {
+    const result = await requireClient().request<{ self: Self }>('preferences:update', patch);
+    useSession.getState().patchSelf(result.self);
+  } catch (error) {
+    if (self) useUi.getState().applyPreferences(self.preferences);
+    report(error, 'Could not save that setting');
+  }
+}
+
+/* ──────────────────────────────────────────────────────────────── discovery ─*/
+
+export async function searchMessages(query: string, conversationId?: string | null): Promise<void> {
+  const trimmed = query.trim();
+  if (trimmed.length < 2) {
+    useChat.getState().setSearch(trimmed, []);
+    return;
+  }
+  try {
+    const result = await requireClient().request<{ hits: SearchHit[] }>('search:messages', {
+      query: trimmed,
+      conversationId: conversationId ?? null,
+    });
+    useChat.getState().setSearch(trimmed, result.hits);
+  } catch (error) {
+    report(error, 'Search failed');
+  }
+}
+
+export async function loadDirectory(): Promise<User[]> {
+  try {
+    const result = await requireClient().request<{ users: User[] }>('directory:list');
+    for (const user of result.users) useChat.getState().upsertUser(user);
+    return result.users;
+  } catch (error) {
+    report(error, 'Could not load the member directory');
+    return [];
+  }
+}
+
+/* ───────────────────────────────────────────────────────────────── helpers ─*/
+
+function report(error: unknown, fallback: string): void {
+  const description = error instanceof RealtimeError ? error.message : fallback;
+  useUi.getState().toast({ tone: 'danger', title: fallback, description });
+}
+
+/** Resolves the display title of a conversation for the current viewer. */
+export function titleOf(conversation: Conversation): string {
+  const { users } = useChat.getState();
+  const selfId = useSession.getState().self?.id ?? '';
+  return conversationTitle(conversation, selfId, users);
+}
