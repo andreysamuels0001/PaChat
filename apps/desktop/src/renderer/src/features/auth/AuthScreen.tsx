@@ -327,3 +327,38 @@ function DemoHint({ onUse }: { onUse: (identifier: string) => void }) {
     </div>
   );
 }
+
+/**
+ * The ambient background.
+ *
+ * Three slowly drifting radial gradients at low opacity. Transform-only
+ * animation, so it runs entirely on the compositor and costs no layout or
+ * paint work; `prefers-reduced-motion` freezes it via the global rule.
+ */
+function Aurora() {
+  return (
+    <div aria-hidden className="pointer-events-none absolute inset-0 overflow-hidden">
+      <div
+        className="absolute -top-1/4 -left-1/5 size-[70vw] rounded-full opacity-[0.22] blur-[100px]"
+        style={{
+          background: 'radial-gradient(circle, var(--c-accent-500), transparent 68%)',
+          animation: 'aurora 22s var(--ease-in-out) infinite',
+        }}
+      />
+      <div
+        className="absolute top-1/3 -right-1/6 size-[55vw] rounded-full opacity-[0.18] blur-[100px]"
+        style={{
+          background: 'radial-gradient(circle, #a855f7, transparent 68%)',
+          animation: 'aurora 28s var(--ease-in-out) infinite reverse',
+        }}
+      />
+      <div
+        className="absolute -bottom-1/4 left-1/4 size-[50vw] rounded-full opacity-[0.12] blur-[110px]"
+        style={{
+          background: 'radial-gradient(circle, var(--c-user-cyan), transparent 68%)',
+          animation: 'aurora 34s var(--ease-in-out) infinite',
+        }}
+      />
+    </div>
+  );
+}
