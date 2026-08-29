@@ -162,3 +162,76 @@ private, so each recipient receives their own view of the same conversation
 rather than one shared payload that would be wrong for everyone but the sender.
 
 ---
+
+## 4 · The desktop client
+
+### Process boundaries
+
+```
+main        full Node privileges · window · menu · keychain · notifications
+  │ typed IPC over a named-channel allow-list
+preload     the only code with both Electron and page access
+  │ window.pachat — a hand-written API surface
+renderer    sandboxed · no Node · no require · strict CSP
+```
+
+The renderer is treated as untrusted. Every capability it has is a channel
+declared in `shared-ipc/contract.ts`, which means adding a privilege requires
+editing that file first — the privileged surface stays small and reviewable.
+
+`ipcRenderer` itself is **never** exposed. Doing so would let the renderer
+address any channel in the main process and defeat the point of isolation.
+
+### State ownership
+
+Three Zustand stores, split by _what invalidates them_:
+
+| Store           | Holds                                          | Changes when                         |
+| :-------------- | :--------------------------------------------- | :----------------------------------- |
+| `session-store` | auth status, self, tokens, connection state    | sign-in, refresh, socket transitions |
+| `chat-store`    | conversations, messages, users, typing, drafts | server pushes, navigation            |
+| `ui-store`      | theme, density, panels, overlays, toasts       | user interaction                     |
+
+They are separate so that a panel toggle never invalidates a message list
+render, and a typing indicator never re-renders the sidebar.
+
+The chat cache is **normalised into maps** keyed by id — a pushed update
+touches one entry instead of rewriting a list. Messages are the exception: they
+are kept as an ordered array per conversation, because the renderer needs
+positional context. Grouping, day separators and the unread divider all depend
+on a message's neighbours.
+
+### The realtime binding
+
+`store/realtime.ts` is the only module that touches the socket. It translates
+server pushes into store mutations and exposes user intents as plain async
+functions.
+
+Components therefore never see the socket. They call `sendMessage(...)` and
+read state, which keeps optimistic updates, retries and failure handling in one
+place rather than spread across the component tree.
+
+The socket's lifetime is tied to **authentication, not to the component tree**:
+it opens when a session exists and closes on sign-out, so no re-render can tear
+down a live connection.
+
+### The optimistic send
+
+```
+Enter pressed
+  ├─ mint nonce
+  ├─ push PendingMessage into the store  ──▶ bubble renders immediately
+  ├─ clear the draft and the reply target
+  └─ emit message:send
+
+   ack ──▶ server's message:created arrives with the nonce
+            └─ pending entry dropped; authoritative row kept
+
+   failure ──▶ pending entry marked "failed"
+                └─ Retry reuses the same nonce (server deduplicates)
+                   Discard removes it
+```
+
+The text is never lost, and a retry can never duplicate the message.
+
+---
