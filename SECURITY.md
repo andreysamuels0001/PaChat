@@ -102,3 +102,26 @@ you find a gap in it.
   cannot be sniffed into something executable.
 - The `?token=` query fallback exists only because `<img src>` cannot carry a
   header, and is **restricted to `GET`** so a URL alone can never change state.
+
+### The Electron client
+
+- The renderer runs with `contextIsolation: true`, `nodeIntegration: false` and
+  `sandbox: true`. **No filesystem, no `require`, no direct Electron access.**
+- `ipcRenderer` is **never** exposed. Every capability is a named channel
+  declared in `shared-ipc/contract.ts` and surfaced through a hand-written
+  preload bridge, so the privileged surface is small and reviewable.
+- Each IPC handler **re-validates its own input**; the renderer is treated as
+  the least-trusted part of the app.
+- A **strict CSP** is injected at the session layer, covering the Vite dev
+  server as well as the packaged build. `object-src`, `frame-src` and
+  `form-action` are all `none`.
+- All navigation away from the bundle — clicked links, crafted anchors, window
+  opens — is routed to the OS browser, and only `http(s)` is honoured.
+- Permission requests are denied by default; only notifications and sanitised
+  clipboard writes are allowed.
+- **Credentials live in the OS keychain** via `safeStorage` (DPAPI on Windows,
+  Keychain on macOS, libsecret on Linux). Where no secret service is available,
+  storage is **refused rather than silently downgraded** to plaintext — the
+  user simply signs in each launch.
+- The access token is held **in memory only**. It is short-lived and
+  re-derivable, so persisting it would widen the blast radius for no benefit.
