@@ -298,3 +298,32 @@ function Highlight({ icon, text }: { icon: React.ReactNode; text: string }) {
     </li>
   );
 }
+
+/**
+ * Seeded-workspace credentials.
+ *
+ * Shown only in development. A showcase app that greets a first-time visitor
+ * with an empty login form wastes the demo; one click into a populated
+ * workspace is the point.
+ */
+function DemoHint({ onUse }: { onUse: (identifier: string) => void }) {
+  if (import.meta.env.PROD) return null;
+
+  return (
+    <div className="mt-5 rounded-md border border-line-subtle bg-sunken/60 px-3 py-2.5">
+      <p className="text-[11.5px] font-medium tracking-wide text-ink-faint uppercase">
+        Demo workspace
+      </p>
+      <div className="mt-1.5 flex items-center justify-between gap-2">
+        <code className="font-mono text-[11.5px] text-ink-muted">ada@pachat.app · pachat123</code>
+        <button
+          type="button"
+          onClick={() => onUse('ada@pachat.app')}
+          className="shrink-0 text-[11.5px] font-medium text-accent-300 hover:underline"
+        >
+          Use
+        </button>
+      </div>
+    </div>
+  );
+}
