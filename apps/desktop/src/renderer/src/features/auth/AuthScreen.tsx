@@ -282,3 +282,19 @@ export function AuthScreen() {
     </div>
   );
 }
+
+function Highlight({ icon, text }: { icon: React.ReactNode; text: string }) {
+  return (
+    <li className="flex items-center gap-3 text-[13.5px] text-ink-muted">
+      <span
+        className={cn(
+          'flex size-7 shrink-0 items-center justify-center rounded-md',
+          'border border-accent-500/20 bg-accent-500/10 text-accent-300 [&>svg]:size-3.5',
+        )}
+      >
+        {icon}
+      </span>
+      {text}
+    </li>
+  );
+}
