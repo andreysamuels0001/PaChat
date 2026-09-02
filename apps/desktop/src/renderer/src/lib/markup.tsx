@@ -61,3 +61,41 @@ export function renderMessageBody(body: string, context: MarkupContext): ReactNo
 
   return blocks;
 }
+
+/** Splits non-code text into quote blocks and ordinary runs. */
+function renderPlainBlocks(text: string, context: MarkupContext): ReactNode {
+  const lines = text.split('\n');
+  const output: ReactNode[] = [];
+  let quoted: string[] = [];
+  let key = 0;
+
+  const flushQuote = (): void => {
+    if (quoted.length === 0) return;
+    output.push(
+      <blockquote key={`q${key++}`}>{renderInline(quoted.join('\n'), context)}</blockquote>,
+    );
+    quoted = [];
+  };
+
+  let plain: string[] = [];
+  const flushPlain = (): void => {
+    if (plain.length === 0) return;
+    output.push(<Fragment key={`p${key++}`}>{renderInline(plain.join('\n'), context)}</Fragment>);
+    plain = [];
+  };
+
+  for (const line of lines) {
+    if (line.startsWith('> ') || line === '>') {
+      flushPlain();
+      quoted.push(line.replace(/^>\s?/, ''));
+    } else {
+      flushQuote();
+      plain.push(line);
+    }
+  }
+
+  flushQuote();
+  flushPlain();
+
+  return output;
+}
