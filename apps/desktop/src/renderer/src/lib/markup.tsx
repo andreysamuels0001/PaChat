@@ -99,3 +99,48 @@ function renderPlainBlocks(text: string, context: MarkupContext): ReactNode {
 
   return output;
 }
+
+/* ─────────────────────────────────────────────────────────── inline level ──*/
+
+/**
+ * One pass over the text with a single alternation, so each character is
+ * examined once regardless of how many inline forms are supported.
+ *
+ * Order matters: inline code wins over emphasis (so `**` inside backticks
+ * stays literal), and the URL branch precedes the mention branch so an `@` in
+ * a query string is not mistaken for a handle.
+ */
+const INLINE =
+  /(`[^`\n]+`)|(\*\*[^*\n]+\*\*)|(~~[^~\n]+~~)|(\*[^*\n]+\*)|(https?:\/\/[^\s<>"')]+)|((?:^|(?<=[\s(]))@[a-z0-9](?:[a-z0-9._-]*[a-z0-9])?)/gi;
+
+function renderInline(text: string, context: MarkupContext): ReactNode[] {
+  const nodes: ReactNode[] = [];
+  let cursor = 0;
+  let key = 0;
+
+  for (const match of text.matchAll(INLINE)) {
+    const start = match.index ?? 0;
+    if (start > cursor) nodes.push(text.slice(cursor, start));
+
+    const [raw, code, bold, strike, italic, url, mention] = match;
+
+    if (code) {
+      nodes.push(<code key={key++}>{code.slice(1, -1)}</code>);
+    } else if (bold) {
+      nodes.push(<strong key={key++}>{bold.slice(2, -2)}</strong>);
+    } else if (strike) {
+      nodes.push(<del key={key++}>{strike.slice(2, -2)}</del>);
+    } else if (italic) {
+      nodes.push(<em key={key++}>{italic.slice(1, -1)}</em>);
+    } else if (url) {
+      nodes.push(<ExternalLink key={key++} href={url} />);
+    } else if (mention) {
+      nodes.push(<Mention key={key++} raw={mention} context={context} />);
+    }
+
+    cursor = start + raw.length;
+  }
+
+  if (cursor < text.length) nodes.push(text.slice(cursor));
+  return nodes;
+}
