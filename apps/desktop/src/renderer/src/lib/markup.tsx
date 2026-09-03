@@ -144,3 +144,62 @@ function renderInline(text: string, context: MarkupContext): ReactNode[] {
   if (cursor < text.length) nodes.push(text.slice(cursor));
   return nodes;
 }
+
+/**
+ * Links always leave the app.
+ *
+ * Opening a URL inside the Electron window would give remote content the same
+ * origin as the application shell, so navigation is routed to the OS browser
+ * through the preload bridge instead.
+ */
+function ExternalLink({ href }: { href: string }) {
+  let label = href;
+  try {
+    const parsed = new URL(href);
+    // Show the host prominently and trim a long path, so a pasted tracking URL
+    // does not dominate the message.
+    label =
+      parsed.pathname.length > 1
+        ? `${parsed.host}${parsed.pathname.length > 24 ? `${parsed.pathname.slice(0, 24)}…` : parsed.pathname}`
+        : parsed.host;
+  } catch {
+    /* keep the raw string */
+  }
+
+  return (
+    <a
+      href={href}
+      title={href}
+      onClick={(event) => {
+        event.preventDefault();
+        bridge.shell.openExternal(href);
+      }}
+    >
+      {label}
+    </a>
+  );
+}
+
+function Mention({ raw, context }: { raw: string; context: MarkupContext }) {
+  // The alternation may capture a leading space; keep it as text so spacing
+  // between words is preserved.
+  const leading = raw.startsWith('@') ? '' : raw[0];
+  const handle = raw.replace(/^\s*@/, '').toLowerCase();
+
+  const isEveryone = handle === 'everyone';
+  const isSelf = isEveryone || handle === context.selfUsername.toLowerCase();
+  const display = isEveryone ? 'everyone' : (context.resolveMention?.(handle) ?? handle);
+
+  return (
+    <>
+      {leading}
+      <span
+        className={isSelf ? 'mention mention-self' : 'mention'}
+        onClick={() => !isEveryone && context.onMentionClick?.(handle)}
+        role={context.onMentionClick && !isEveryone ? 'button' : undefined}
+      >
+        @{display}
+      </span>
+    </>
+  );
+}
