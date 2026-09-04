@@ -146,3 +146,118 @@ function Section({
     </section>
   );
 }
+
+/* ──────────────────────────────────────────────────────────────────── row ──*/
+
+function ConversationRow({
+  conversation,
+  active,
+}: {
+  conversation: Conversation;
+  active: boolean;
+}) {
+  const users = useChat((s) => s.users);
+  const typing = useChat((s) => s.typing.get(conversation.id));
+  const selfId = useSession((s) => s.self?.id);
+  useTicker(45_000);
+
+  const title = titleOf(conversation);
+  const unread = conversation.unreadCount;
+  const hasUnread = unread > 0 && !conversation.isMuted;
+
+  const peer =
+    conversation.kind === 'direct'
+      ? users.get(conversation.members.find((m) => m.userId !== selfId)?.userId ?? '')
+      : undefined;
+
+  const author = conversation.lastMessage
+    ? users.get(conversation.lastMessage.authorId)
+    : undefined;
+
+  const preview = typing?.length
+    ? 'typing…'
+    : messagePreview(
+        conversation.lastMessage,
+        conversation.kind === 'channel' ? author?.displayName : undefined,
+      );
+
+  return (
+    <button
+      type="button"
+      onClick={() => void openConversation(conversation.id)}
+      aria-current={active ? 'true' : undefined}
+      className={cn(
+        'group relative flex items-center gap-2.5 rounded-md px-2 py-1.5 text-left',
+        'transition-colors duration-(--duration-fast) ease-(--ease-smooth)',
+        active ? 'bg-accent-500/14' : 'hover:bg-hover/70',
+      )}
+    >
+      {/* Active indicator: a short bar rather than a full-height border, which
+          reads as a selection rather than as a divider. */}
+      {active && (
+        <span className="absolute top-1/2 left-0 h-4 w-[2.5px] -translate-y-1/2 rounded-r-full bg-accent-400" />
+      )}
+
+      <span className="shrink-0">
+        {conversation.kind === 'direct' && peer ? (
+          <Avatar user={peer} size="md" showPresence />
+        ) : (
+          <span
+            className={cn(
+              'flex size-8 items-center justify-center rounded-md text-[15px]',
+              active ? 'bg-accent-500/20' : 'bg-hover/80',
+            )}
+          >
+            {conversation.icon ??
+              (conversation.isPrivate ? (
+                <Lock className="size-3.5 text-ink-dim" />
+              ) : (
+                <Hash className="size-3.5 text-ink-dim" />
+              ))}
+          </span>
+        )}
+      </span>
+
+      <span className="min-w-0 flex-1">
+        <span className="flex items-baseline gap-2">
+          <span
+            className={cn(
+              'min-w-0 flex-1 truncate text-[13.5px] tracking-tight',
+              hasUnread
+                ? 'font-semibold text-ink'
+                : active
+                  ? 'font-medium text-ink'
+                  : 'text-ink-muted',
+            )}
+          >
+            {conversation.kind === 'channel' ? `# ${title}` : title}
+          </span>
+          {conversation.lastMessage && (
+            <span className="shrink-0 text-[11px] tabular-nums text-ink-faint">
+              {formatRelativeTime(conversation.lastMessage.createdAt)}
+            </span>
+          )}
+        </span>
+
+        <span className="mt-0.5 flex items-center gap-2">
+          <span
+            className={cn(
+              'min-w-0 flex-1 truncate text-[12px]',
+              typing?.length ? 'text-accent-300 italic' : 'text-ink-faint',
+            )}
+          >
+            {preview}
+          </span>
+          {conversation.hasUnreadMention && !conversation.isMuted ? (
+            <Badge count={unread} tone="danger" />
+          ) : (
+            hasUnread && <Badge count={unread} />
+          )}
+          {conversation.isMuted && unread > 0 && (
+            <span className="size-1.5 shrink-0 rounded-full bg-ink-faint" aria-label="Muted" />
+          )}
+        </span>
+      </span>
+    </button>
+  );
+}
