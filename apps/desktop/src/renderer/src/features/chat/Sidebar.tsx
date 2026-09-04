@@ -97,3 +97,52 @@ export function Sidebar() {
     </nav>
   );
 }
+
+/* ───────────────────────────────────────────────────────────────── section ─*/
+
+function Section({
+  title,
+  count,
+  collapsed,
+  onToggle,
+  action,
+  children,
+}: {
+  title: string;
+  count: number;
+  collapsed: boolean;
+  onToggle: () => void;
+  action?: React.ReactNode;
+  children: React.ReactNode;
+}) {
+  return (
+    <section className="mb-4">
+      <header className="group flex items-center gap-1 px-1.5 pb-1">
+        <button
+          type="button"
+          onClick={onToggle}
+          aria-expanded={!collapsed}
+          className={cn(
+            'flex min-w-0 flex-1 items-center gap-1 rounded-xs py-0.5 text-left',
+            'text-[11px] font-semibold tracking-[0.06em] text-ink-faint uppercase',
+            'transition-colors hover:text-ink-dim',
+          )}
+        >
+          <ChevronDown
+            className={cn(
+              'size-3 shrink-0 transition-transform duration-(--duration-fast)',
+              collapsed && '-rotate-90',
+            )}
+          />
+          <span className="truncate">{title}</span>
+          <span className="text-ink-faint/60 tabular-nums">{count}</span>
+        </button>
+        <span className="opacity-0 transition-opacity group-hover:opacity-100 focus-within:opacity-100">
+          {action}
+        </span>
+      </header>
+
+      {!collapsed && <div className="flex flex-col gap-px">{children}</div>}
+    </section>
+  );
+}
