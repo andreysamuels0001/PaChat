@@ -261,3 +261,44 @@ function ConversationRow({
     </button>
   );
 }
+
+/* ───────────────────────────────────────────────────────────── self card ──*/
+
+function SelfCard() {
+  const self = useSession((s) => s.self);
+  const openOverlay = useUi((s) => s.openOverlay);
+  const [menuOpen, setMenuOpen] = useState(false);
+
+  if (!self) return null;
+
+  return (
+    <div className="relative flex items-center gap-2 p-2 hairline-t">
+      <button
+        type="button"
+        onClick={() => setMenuOpen((open) => !open)}
+        className={cn(
+          'flex min-w-0 flex-1 items-center gap-2.5 rounded-md px-1.5 py-1.5 text-left',
+          'transition-colors hover:bg-hover/70',
+        )}
+      >
+        <Avatar user={self} size="md" showPresence />
+        <span className="min-w-0 flex-1">
+          <span className="block truncate text-[13px] font-medium text-ink">
+            {self.displayName}
+          </span>
+          <span className="block truncate text-[11.5px] text-ink-faint">
+            {self.presence.message ?? `@${self.username}`}
+          </span>
+        </span>
+      </button>
+
+      <Tooltip content="Settings" shortcut={shortcut('Mod+,')} placement="top">
+        <IconButton label="Settings" onClick={() => openOverlay('settings')}>
+          <Settings />
+        </IconButton>
+      </Tooltip>
+
+      <PresenceMenu open={menuOpen} onClose={() => setMenuOpen(false)} />
+    </div>
+  );
+}
