@@ -248,3 +248,30 @@ function UnreadDivider({ count }: { count: number }) {
     </div>
   );
 }
+
+/** The header shown once the top of a conversation has been reached. */
+function ConversationStart({ conversation }: { conversation: Conversation }) {
+  const title = titleOf(conversation);
+
+  return (
+    <div className="px-6 pt-10 pb-6">
+      <div
+        className={cn(
+          'flex size-12 items-center justify-center rounded-xl text-[22px]',
+          'border border-line-subtle bg-raised',
+        )}
+      >
+        {conversation.icon ?? <Hash className="size-5 text-ink-dim" />}
+      </div>
+      <h2 className="mt-4 text-[22px] font-semibold tracking-[-0.02em] text-ink">
+        {conversation.kind === 'channel' ? `#${title}` : title}
+      </h2>
+      <p className="mt-1.5 max-w-xl text-[13px] leading-relaxed text-ink-dim">
+        {conversation.topic ??
+          (conversation.kind === 'channel'
+            ? 'This is the very beginning of the channel.'
+            : 'This is the beginning of your direct message history.')}
+      </p>
+    </div>
+  );
+}
