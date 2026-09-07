@@ -159,3 +159,92 @@ export function MessageList({ conversation }: { conversation: Conversation }) {
     </div>
   );
 }
+
+/* ───────────────────────────────────────────────────────────── row builder ─*/
+
+/**
+ * Flattens messages into a render list, interleaving day separators and the
+ * unread divider.
+ *
+ * The divider is placed before the first message newer than the frozen read
+ * mark, and only when that message is not the viewer's own — your own send
+ * should never be announced to you as unread.
+ */
+function buildRows(
+  messages: Message[],
+  unreadMark: number | undefined,
+  selfId: string | undefined,
+): Row[] {
+  const rows: Row[] = [];
+  let lastDay = '';
+  let dividerPlaced = unreadMark === undefined;
+  let unreadCount = 0;
+
+  if (unreadMark !== undefined) {
+    unreadCount = messages.filter((m) => m.createdAt > unreadMark && m.authorId !== selfId).length;
+    if (unreadCount === 0) dividerPlaced = true;
+  }
+
+  for (let index = 0; index < messages.length; index += 1) {
+    const message = messages[index]!;
+    const day = new Date(message.createdAt).toDateString();
+
+    if (day !== lastDay) {
+      rows.push({ kind: 'day', key: `day-${day}`, timestamp: message.createdAt });
+      lastDay = day;
+    }
+
+    if (
+      !dividerPlaced &&
+      unreadMark !== undefined &&
+      message.createdAt > unreadMark &&
+      message.authorId !== selfId
+    ) {
+      rows.push({ kind: 'unread', key: `unread-${message.id}`, count: unreadCount });
+      dividerPlaced = true;
+    }
+
+    // A day separator or the unread divider always breaks grouping, otherwise
+    // the first message after it would render without an avatar.
+    const previous = messages[index - 1];
+    const brokeByDivider = rows[rows.length - 1]?.kind !== 'message';
+    rows.push({
+      kind: 'message',
+      key: message.id,
+      message,
+      grouped: !brokeByDivider && isGroupedWith(message, previous),
+    });
+  }
+
+  return rows;
+}
+
+/* ───────────────────────────────────────────────────────────────── pieces ──*/
+
+function DaySeparator({ timestamp }: { timestamp: number }) {
+  return (
+    <div className="sticky top-0 z-10 flex items-center gap-3 px-6 py-2 backdrop-blur-sm">
+      <span className="h-px flex-1 bg-[var(--c-border-subtle)]" />
+      <span
+        className={cn(
+          'shrink-0 rounded-full border border-line-subtle bg-raised px-2.5 py-0.5',
+          'text-[11px] font-medium text-ink-dim',
+        )}
+      >
+        {formatDayLabel(timestamp)}
+      </span>
+      <span className="h-px flex-1 bg-[var(--c-border-subtle)]" />
+    </div>
+  );
+}
+
+function UnreadDivider({ count }: { count: number }) {
+  return (
+    <div className="flex items-center gap-3 px-6 py-1.5">
+      <span className="h-px flex-1 bg-danger/45" />
+      <span className="shrink-0 rounded-full bg-danger px-2 py-0.5 text-[10.5px] font-bold tracking-wide text-black/85 uppercase">
+        {count} new
+      </span>
+    </div>
+  );
+}
