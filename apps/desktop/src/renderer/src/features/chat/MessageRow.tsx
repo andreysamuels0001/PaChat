@@ -213,3 +213,67 @@ export const MessageRow = memo(function MessageRow({
     </article>
   );
 });
+
+/* ─────────────────────────────────────────────────────────── reply quote ───*/
+
+function ReplyContext({ message }: { message: Message }) {
+  const users = useChat((s) => s.users);
+  const parent = message.replyTo;
+  if (!parent) return null;
+
+  const author = users.get(parent.authorId);
+
+  return (
+    <button
+      type="button"
+      onClick={() => {
+        // Scroll the quoted message into view rather than opening a thread
+        // pane: in a flat log, context is almost always a few rows up.
+        document
+          .querySelector(`[data-message-id="${parent.id}"]`)
+          ?.scrollIntoView({ behavior: 'smooth', block: 'center' });
+      }}
+      className={cn(
+        'mb-1 flex max-w-full items-center gap-1.5 text-left',
+        'text-[11.5px] text-ink-dim transition-colors hover:text-ink-muted',
+      )}
+    >
+      <span
+        className="h-3 w-4 shrink-0 rounded-tl-sm border-t-2 border-l-2"
+        style={{
+          borderColor: author
+            ? `color-mix(in oklab, var(--c-user-${author.accentColor}) 55%, transparent)`
+            : 'var(--c-border-strong)',
+        }}
+        aria-hidden
+      />
+      <span
+        className="shrink-0 font-medium"
+        style={author ? { color: `var(--c-user-${author.accentColor})` } : undefined}
+      >
+        {author?.displayName ?? 'Unknown'}
+      </span>
+      <span className={cn('min-w-0 truncate', parent.isDeleted && 'italic')}>
+        {truncate(parent.excerpt, 90)}
+      </span>
+    </button>
+  );
+}
+
+/* ──────────────────────────────────────────────────────────── system note ──*/
+
+function SystemNotice({ message, author }: { message: Message; author: User | undefined }) {
+  return (
+    <div className="flex items-center gap-2 px-6 py-1.5 text-[12px] text-ink-faint">
+      <span className="h-px flex-1 bg-[var(--c-border-subtle)]" />
+      <span className="shrink-0">
+        <span className="font-medium text-ink-dim">{author?.displayName ?? 'Someone'}</span>{' '}
+        {message.body}
+      </span>
+      <time dateTime={new Date(message.createdAt).toISOString()} className="shrink-0 tabular-nums">
+        {formatClockTime(message.createdAt)}
+      </time>
+      <span className="h-px flex-1 bg-[var(--c-border-subtle)]" />
+    </div>
+  );
+}
