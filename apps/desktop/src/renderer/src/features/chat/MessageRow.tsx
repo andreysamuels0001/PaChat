@@ -277,3 +277,67 @@ function SystemNotice({ message, author }: { message: Message; author: User | un
     </div>
   );
 }
+
+/* ───────────────────────────────────────────────────────── inline editor ───*/
+
+function InlineEditor({
+  messageId,
+  initial,
+  onDone,
+}: {
+  messageId: string;
+  initial: string;
+  onDone: () => void;
+}) {
+  const [value, setValue] = useState(initial);
+  const ref = useRef<HTMLTextAreaElement>(null);
+
+  useEffect(() => {
+    const element = ref.current;
+    if (!element) return;
+    element.focus();
+    // Place the caret at the end rather than selecting everything, so the
+    // first keystroke appends instead of replacing the message.
+    element.setSelectionRange(element.value.length, element.value.length);
+    element.style.height = `${Math.min(element.scrollHeight, 200)}px`;
+  }, []);
+
+  const save = (): void => {
+    const next = value.trim();
+    if (next.length === 0 || next === initial) {
+      onDone();
+      return;
+    }
+    void editMessage(messageId, next);
+  };
+
+  return (
+    <div className="mt-0.5">
+      <textarea
+        ref={ref}
+        value={value}
+        maxLength={LIMITS.messageBody}
+        onChange={(event) => setValue(event.target.value)}
+        onKeyDown={(event) => {
+          if (event.key === 'Escape') {
+            event.preventDefault();
+            onDone();
+          }
+          if (event.key === 'Enter' && !event.shiftKey) {
+            event.preventDefault();
+            save();
+          }
+        }}
+        className={cn(
+          'w-full resize-none rounded-md border border-accent-500/50 bg-sunken px-3 py-2',
+          'text-[13.5px] leading-[1.55] text-ink outline-none selectable',
+          'shadow-[0_0_0_3px_color-mix(in_oklab,var(--c-accent-500)_14%,transparent)]',
+        )}
+      />
+      <p className="mt-1 text-[11px] text-ink-faint">
+        <kbd className="font-sans font-semibold">Enter</kbd> to save ·{' '}
+        <kbd className="font-sans font-semibold">Esc</kbd> to cancel
+      </p>
+    </div>
+  );
+}
