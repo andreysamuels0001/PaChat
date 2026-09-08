@@ -341,3 +341,83 @@ function InlineEditor({
     </div>
   );
 }
+
+/* ─────────────────────────────────────────────────────── pending message ───*/
+
+/**
+ * An optimistic message, rendered before the server has acknowledged it.
+ *
+ * Shown at reduced opacity while in flight. On failure it stays put with a
+ * retry affordance — the text is never silently lost, and because the retry
+ * reuses the original nonce the server deduplicates it rather than creating a
+ * second copy.
+ */
+export function PendingRow({
+  pending,
+  author,
+  grouped,
+  compact,
+}: {
+  pending: PendingMessage;
+  author: User | undefined;
+  grouped: boolean;
+  compact: boolean;
+}) {
+  const failed = pending.state === 'failed';
+
+  return (
+    <article
+      className={cn(
+        'group relative flex gap-3 px-6',
+        grouped ? (compact ? 'py-px' : 'py-0.5') : compact ? 'pt-2 pb-px' : 'pt-3.5 pb-0.5',
+      )}
+    >
+      <div className="w-8 shrink-0">{!grouped && author && <Avatar user={author} size="md" />}</div>
+
+      <div className={cn('min-w-0 flex-1', !failed && 'opacity-55')}>
+        {!grouped && (
+          <header className="flex items-baseline gap-2">
+            <span
+              className="text-[13.5px] font-semibold tracking-tight"
+              style={author ? { color: `var(--c-user-${author.accentColor})` } : undefined}
+            >
+              {author?.displayName ?? 'You'}
+            </span>
+            <span className="flex items-center gap-1 text-[11px] text-ink-faint">
+              {failed ? (
+                <AlertTriangle className="size-3 text-danger" />
+              ) : (
+                <Loader2 className="size-3 animate-spin" />
+              )}
+              {failed ? 'Not sent' : 'Sending'}
+            </span>
+          </header>
+        )}
+
+        <div className="message-body text-[13.5px] leading-[1.55] text-ink">{pending.body}</div>
+
+        {pending.attachments.length > 0 && <Attachments attachments={pending.attachments} />}
+
+        {failed && (
+          <div className="mt-1.5 flex items-center gap-2 text-[11.5px]">
+            <span className="text-danger">{pending.error ?? 'Delivery failed'}</span>
+            <button
+              type="button"
+              onClick={() => void retrySend(pending.nonce)}
+              className="font-medium text-accent-300 hover:underline"
+            >
+              Retry
+            </button>
+            <button
+              type="button"
+              onClick={() => discardPending(pending.nonce)}
+              className="font-medium text-ink-dim hover:underline"
+            >
+              Discard
+            </button>
+          </div>
+        )}
+      </div>
+    </article>
+  );
+}
