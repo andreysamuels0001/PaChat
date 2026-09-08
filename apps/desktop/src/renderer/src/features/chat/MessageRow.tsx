@@ -421,3 +421,32 @@ export function PendingRow({
     </article>
   );
 }
+
+/* ──────────────────────────────────────────────────────────────── helpers ──*/
+
+function MenuItem({
+  icon,
+  label,
+  danger,
+  onClick,
+}: {
+  icon: React.ReactNode;
+  label: string;
+  danger?: boolean;
+  onClick: () => void;
+}) {
+  return (
+    <button
+      type="button"
+      onClick={onClick}
+      className={cn(
+        'flex w-full items-center gap-2.5 rounded-sm px-2 py-1.5 text-left text-[12.5px]',
+        'transition-colors [&>span>svg]:size-3.5',
+        danger ? 'text-danger hover:bg-danger/12' : 'text-ink-muted hover:bg-hover hover:text-ink',
+      )}
+    >
+      <span className="shrink-0">{icon}</span>
+      {label}
+    </button>
+  );
+}
