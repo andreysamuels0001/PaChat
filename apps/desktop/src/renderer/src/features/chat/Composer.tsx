@@ -334,3 +334,27 @@ export function Composer({ conversation }: { conversation: Conversation }) {
     </div>
   );
 }
+
+/** A compact chip for a staged, not-yet-sent attachment. */
+function AttachmentChip({
+  attachment,
+  onRemove,
+}: {
+  attachment: Attachment;
+  onRemove: () => void;
+}) {
+  return (
+    <span
+      className={cn(
+        'flex items-center gap-2 rounded-md border border-line bg-sunken/70 py-1 pr-1 pl-2.5',
+        'text-[11.5px] text-ink-muted',
+      )}
+    >
+      <span className="max-w-40 truncate">{attachment.name}</span>
+      <span className="shrink-0 text-ink-faint">{formatBytes(attachment.byteSize)}</span>
+      <IconButton label={`Remove ${attachment.name}`} size="xs" onClick={onRemove}>
+        <X />
+      </IconButton>
+    </span>
+  );
+}
