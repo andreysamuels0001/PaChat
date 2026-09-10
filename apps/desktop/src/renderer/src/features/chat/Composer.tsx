@@ -358,3 +358,37 @@ function AttachmentChip({
     </span>
   );
 }
+
+/**
+ * A small, hand-picked emoji set.
+ *
+ * Shipping a full emoji keyboard means a multi-megabyte dataset and a search
+ * index for something most messages never use. The quick reactions plus a few
+ * common faces cover the realistic cases, and the OS picker is always one
+ * shortcut away for anything else.
+ */
+const EMOJI = [
+  ...QUICK_REACTIONS,
+  '😀',
+  '😅',
+  '🙂',
+  '😍',
+  '🤔',
+  '😴',
+  '🙌',
+  '🤝',
+  '💪',
+  '🧠',
+  '☕',
+  '🍕',
+  '⭐',
+  '💡',
+  '📌',
+  '🐛',
+  '🔧',
+  '📦',
+  '🎯',
+  '⏱️',
+  '🏁',
+  '🌱',
+] as const;
