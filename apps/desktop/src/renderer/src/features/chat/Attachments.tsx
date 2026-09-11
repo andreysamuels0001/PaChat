@@ -88,3 +88,60 @@ export function Attachments({ attachments }: { attachments: Attachment[] }) {
     </>
   );
 }
+
+function ImageTile({
+  attachment,
+  token,
+  solo,
+  onOpen,
+}: {
+  attachment: Attachment;
+  token: string | null;
+  solo: boolean;
+  onOpen: () => void;
+}) {
+  const [loaded, setLoaded] = useState(false);
+
+  // Cap the reserved height so a tall screenshot cannot push the composer off
+  // screen, while still honouring the real aspect ratio below that cap.
+  const ratio = (attachment.width ?? 1) / (attachment.height ?? 1);
+  const maxHeight = solo ? 360 : 200;
+
+  return (
+    <button
+      type="button"
+      onClick={onOpen}
+      className={cn(
+        'group relative overflow-hidden rounded-lg border border-line-subtle bg-sunken',
+        'transition-[border-color] duration-(--duration-fast) hover:border-line-strong',
+      )}
+      style={{
+        aspectRatio: `${clamp(ratio, 0.5, 2.4)}`,
+        maxHeight,
+      }}
+    >
+      {!loaded && <span className="skeleton absolute inset-0" />}
+      <img
+        src={fileUrl(attachment.url, token)}
+        alt={attachment.name}
+        draggable={false}
+        loading="lazy"
+        onLoad={() => setLoaded(true)}
+        className={cn(
+          'size-full object-cover transition-opacity duration-(--duration-base)',
+          loaded ? 'opacity-100' : 'opacity-0',
+        )}
+      />
+      <span
+        className={cn(
+          'absolute inset-x-0 bottom-0 flex items-center gap-1.5 bg-gradient-to-t',
+          'from-black/70 to-transparent px-2.5 pt-6 pb-2 text-[11px] text-white/90',
+          'opacity-0 transition-opacity group-hover:opacity-100',
+        )}
+      >
+        <span className="truncate">{attachment.name}</span>
+        <span className="shrink-0 text-white/60">{formatBytes(attachment.byteSize)}</span>
+      </span>
+    </button>
+  );
+}
