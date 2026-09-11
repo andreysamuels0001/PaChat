@@ -145,3 +145,51 @@ function ImageTile({
     </button>
   );
 }
+
+/** Picks an icon from the mime type's top-level family. */
+function iconFor(mimeType: string): React.ReactNode {
+  if (mimeType.startsWith('video/')) return <Film />;
+  if (mimeType.startsWith('audio/')) return <Music />;
+  if (mimeType.startsWith('text/') || mimeType === 'application/pdf') return <FileText />;
+  return <Paperclip />;
+}
+
+function FileRow({ attachment, token }: { attachment: Attachment; token: string | null }) {
+  return (
+    <div
+      className={cn(
+        'group flex items-center gap-3 rounded-lg border border-line-subtle bg-raised/70',
+        'px-3 py-2.5 transition-colors hover:border-line hover:bg-raised',
+      )}
+    >
+      <span
+        className={cn(
+          'flex size-8 shrink-0 items-center justify-center rounded-md',
+          'bg-hover text-ink-dim [&>svg]:size-4',
+        )}
+      >
+        {iconFor(attachment.mimeType)}
+      </span>
+
+      <span className="min-w-0 flex-1">
+        <span className="block truncate text-[13px] font-medium text-ink">{attachment.name}</span>
+        <span className="block text-[11.5px] text-ink-faint">
+          {formatBytes(attachment.byteSize)}
+        </span>
+      </span>
+
+      <button
+        type="button"
+        aria-label={`Download ${attachment.name}`}
+        onClick={() => bridge.shell.openExternal(fileUrl(attachment.url, token))}
+        className={cn(
+          'flex size-7 shrink-0 items-center justify-center rounded-sm text-ink-dim',
+          'opacity-0 transition-opacity hover:bg-hover hover:text-ink',
+          'group-hover:opacity-100 focus-visible:opacity-100',
+        )}
+      >
+        <Download className="size-4" />
+      </button>
+    </div>
+  );
+}
