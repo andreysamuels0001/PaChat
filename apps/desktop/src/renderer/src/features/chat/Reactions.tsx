@@ -59,3 +59,56 @@ export function Reactions({ messageId, reactions }: { messageId: string; reactio
     </div>
   );
 }
+
+/**
+ * The "add a reaction" affordance in the hover toolbar.
+ *
+ * Offers a curated set rather than a full emoji keyboard: eight shortcuts
+ * cover the overwhelming majority of real use, and fit in one row with no
+ * search field to focus.
+ */
+export function ReactionPicker({ messageId }: { messageId: string }) {
+  const [open, setOpen] = useState(false);
+
+  return (
+    <span className="relative inline-flex">
+      <Tooltip content="Add reaction">
+        <button
+          type="button"
+          aria-label="Add reaction"
+          onClick={() => setOpen((v) => !v)}
+          className={cn(
+            'flex size-7 items-center justify-center rounded-sm text-ink-dim',
+            'transition-colors hover:bg-hover hover:text-ink',
+            open && 'bg-hover text-ink',
+          )}
+        >
+          <SmilePlus className="size-4" />
+        </button>
+      </Tooltip>
+
+      <Popover open={open} onClose={() => setOpen(false)} align="end" side="top">
+        <div className="flex items-center gap-0.5 p-1.5">
+          {QUICK_REACTIONS.map((emoji) => (
+            <button
+              key={emoji}
+              type="button"
+              aria-label={`React with ${emoji}`}
+              onClick={() => {
+                void toggleReaction(messageId, emoji);
+                setOpen(false);
+              }}
+              className={cn(
+                'flex size-8 items-center justify-center rounded-sm text-[17px]',
+                'transition-transform duration-(--duration-fast) ease-(--ease-smooth)',
+                'hover:bg-hover hover:scale-115',
+              )}
+            >
+              {emoji}
+            </button>
+          ))}
+        </div>
+      </Popover>
+    </span>
+  );
+}
