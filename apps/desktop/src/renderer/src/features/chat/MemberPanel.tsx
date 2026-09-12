@@ -92,3 +92,64 @@ export function MemberPanel({ conversation }: { conversation: Conversation }) {
     </aside>
   );
 }
+
+function MemberRow({
+  user,
+  role,
+  isSelf,
+  caughtUp,
+}: {
+  user: User;
+  role: string;
+  isSelf: boolean;
+  caughtUp: boolean;
+}) {
+  return (
+    <div className="group flex items-center gap-2.5 rounded-md px-2 py-1.5 hover:bg-hover/70">
+      <Avatar user={user} size="md" showPresence />
+
+      <div className="min-w-0 flex-1">
+        <p className="flex items-center gap-1.5 truncate text-[13px] font-medium text-ink">
+          <span className="truncate">{user.displayName}</span>
+          {isSelf && <span className="shrink-0 text-[11px] text-ink-faint">(you)</span>}
+          {role === 'owner' && (
+            <Tooltip content="Channel owner">
+              <Crown className="size-3 shrink-0 text-warning" />
+            </Tooltip>
+          )}
+          {role === 'admin' && (
+            <Tooltip content="Channel admin">
+              <Shield className="size-3 shrink-0 text-info" />
+            </Tooltip>
+          )}
+        </p>
+        <p className="truncate text-[11.5px] text-ink-faint">
+          {user.presence.message ??
+            user.title ??
+            (user.presence.state === 'offline'
+              ? `Last seen ${formatRelativeTime(user.presence.lastSeenAt)} ago`
+              : `@${user.username}`)}
+        </p>
+      </div>
+
+      {caughtUp && !isSelf && (
+        <Tooltip content="Has read the latest message">
+          <Check className="size-3.5 shrink-0 text-success" />
+        </Tooltip>
+      )}
+
+      {!isSelf && (
+        <Tooltip content="Send a direct message">
+          <IconButton
+            label={`Message ${user.displayName}`}
+            size="xs"
+            className="opacity-0 transition-opacity group-hover:opacity-100 focus-visible:opacity-100"
+            onClick={() => void openDirectMessage(user.id)}
+          >
+            <MessageSquare />
+          </IconButton>
+        </Tooltip>
+      )}
+    </div>
+  );
+}
