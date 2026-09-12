@@ -157,3 +157,95 @@ export function NewChannelDialog() {
     </Modal>
   );
 }
+
+/* ───────────────────────────────────────────────────────── new direct ─────*/
+
+export function NewDirectDialog() {
+  const open = useUi((s) => s.overlay === 'new-direct');
+  const close = useUi((s) => s.closeOverlay);
+  const [query, setQuery] = useState('');
+  const { users, loading } = useDirectory(open);
+  const selfId = useSession((s) => s.self?.id);
+
+  const needle = query.trim().toLowerCase();
+  const matches = users.filter(
+    (user) =>
+      user.id !== selfId &&
+      (needle.length === 0 ||
+        user.displayName.toLowerCase().includes(needle) ||
+        user.username.includes(needle)),
+  );
+
+  return (
+    <Modal
+      open={open}
+      onClose={close}
+      title="New message"
+      description="Pick someone to start a direct conversation with."
+      width="max-w-md"
+    >
+      <TextField
+        data-autofocus
+        value={query}
+        onChange={(event) => setQuery(event.target.value)}
+        placeholder="Search members"
+        icon={<Search />}
+      />
+
+      <div className="scroll-area mt-3 max-h-80 overflow-y-auto">
+        {loading ? (
+          <div className="flex items-center justify-center py-8">
+            <Spinner />
+          </div>
+        ) : matches.length === 0 ? (
+          <p className="py-8 text-center text-[13px] text-ink-faint">No members match that.</p>
+        ) : (
+          <div className="flex flex-col gap-px">
+            {matches.map((user) => (
+              <button
+                key={user.id}
+                type="button"
+                onClick={() => {
+                  void openDirectMessage(user.id);
+                  close();
+                }}
+                className="flex items-center gap-3 rounded-md px-2 py-2 text-left hover:bg-hover/70"
+              >
+                <Avatar user={user} size="md" showPresence />
+                <span className="min-w-0 flex-1">
+                  <span className="block truncate text-[13.5px] font-medium text-ink">
+                    {user.displayName}
+                  </span>
+                  <span className="block truncate text-[11.5px] text-ink-faint">
+                    {user.title ?? `@${user.username}`}
+                  </span>
+                </span>
+              </button>
+            ))}
+          </div>
+        )}
+      </div>
+    </Modal>
+  );
+}
+
+/* ─────────────────────────────────────────────────────────── shared bits ──*/
+
+/** Loads the member directory once per dialog opening. */
+function useDirectory(open: boolean): { users: User[]; loading: boolean } {
+  const cached = useChat((s) => s.users);
+  const [loading, setLoading] = useState(false);
+
+  useEffect(() => {
+    if (!open) return;
+    setLoading(true);
+    void loadDirectory().finally(() => setLoading(false));
+  }, [open]);
+
+  const users = useMemo(
+    () => [...cached.values()].sort((a, b) => a.displayName.localeCompare(b.displayName)),
+    [cached],
+  );
+
+  return { users, loading: loading && users.length === 0 };
+}
