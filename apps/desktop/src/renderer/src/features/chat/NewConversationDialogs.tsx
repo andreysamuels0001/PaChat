@@ -249,3 +249,56 @@ function useDirectory(open: boolean): { users: User[]; loading: boolean } {
 
   return { users, loading: loading && users.length === 0 };
 }
+
+function MemberPicker({
+  selected,
+  onToggle,
+}: {
+  selected: Set<string>;
+  onToggle: (id: string) => void;
+}) {
+  const { users } = useDirectory(true);
+  const selfId = useSession((s) => s.self?.id);
+  const candidates = users.filter((user) => user.id !== selfId);
+
+  if (candidates.length === 0) return null;
+
+  return (
+    <div className="flex flex-col gap-2">
+      <span className="text-[12px] font-medium tracking-wide text-ink-muted">
+        Invite members{' '}
+        {selected.size > 0 && <span className="text-ink-faint">· {selected.size} selected</span>}
+      </span>
+
+      <div className="scroll-area max-h-44 overflow-y-auto rounded-md border border-line-subtle bg-sunken/40 p-1">
+        {candidates.map((user) => {
+          const picked = selected.has(user.id);
+          return (
+            <button
+              key={user.id}
+              type="button"
+              onClick={() => onToggle(user.id)}
+              className={cn(
+                'flex w-full items-center gap-2.5 rounded-sm px-2 py-1.5 text-left',
+                'transition-colors hover:bg-hover/70',
+              )}
+            >
+              <Avatar user={user} size="sm" />
+              <span className="min-w-0 flex-1 truncate text-[13px] text-ink">
+                {user.displayName}
+              </span>
+              <span
+                className={cn(
+                  'flex size-4 shrink-0 items-center justify-center rounded-xs border',
+                  picked ? 'border-accent-500 bg-accent-500' : 'border-line-strong',
+                )}
+              >
+                {picked && <Check className="size-3 text-white" />}
+              </span>
+            </button>
+          );
+        })}
+      </div>
+    </div>
+  );
+}
