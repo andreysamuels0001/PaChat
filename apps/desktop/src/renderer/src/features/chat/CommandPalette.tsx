@@ -221,3 +221,102 @@ export function CommandPalette() {
     </Modal>
   );
 }
+
+/* ─────────────────────────────────────────────────────────────────── row ───*/
+
+function Row({
+  item,
+  index,
+  active,
+  onHover,
+  onSelect,
+}: {
+  item: Item;
+  index: number;
+  active: boolean;
+  onHover: () => void;
+  onSelect: () => void;
+}) {
+  const users = useChat((s) => s.users);
+
+  return (
+    <button
+      type="button"
+      data-index={index}
+      onMouseMove={onHover}
+      onClick={onSelect}
+      className={cn(
+        'flex w-full items-center gap-3 rounded-md px-2.5 py-2 text-left',
+        'transition-colors duration-(--duration-fast)',
+        active ? 'bg-accent-500/16' : 'hover:bg-hover/60',
+      )}
+    >
+      {item.kind === 'conversation' && (
+        <>
+          <span className="flex size-7 shrink-0 items-center justify-center rounded-md bg-hover/80 text-[14px]">
+            {item.conversation.icon ?? <Hash className="size-3.5 text-ink-dim" />}
+          </span>
+          <span className="min-w-0 flex-1">
+            <span className="block truncate text-[13.5px] font-medium text-ink">
+              {item.conversation.kind === 'channel'
+                ? `#${titleOf(item.conversation)}`
+                : titleOf(item.conversation)}
+            </span>
+            {item.conversation.topic && (
+              <span className="block truncate text-[11.5px] text-ink-faint">
+                {item.conversation.topic}
+              </span>
+            )}
+          </span>
+        </>
+      )}
+
+      {item.kind === 'member' && (
+        <>
+          <Avatar user={item.user} size="sm" showPresence />
+          <span className="min-w-0 flex-1">
+            <span className="block truncate text-[13.5px] font-medium text-ink">
+              {item.user.displayName}
+            </span>
+            <span className="block truncate text-[11.5px] text-ink-faint">
+              @{item.user.username}
+            </span>
+          </span>
+          <MessageSquare className="size-3.5 shrink-0 text-ink-faint" />
+        </>
+      )}
+
+      {item.kind === 'message' && (
+        <>
+          <span className="w-7 shrink-0" />
+          <span className="min-w-0 flex-1">
+            <span className="flex items-baseline gap-2">
+              <span className="truncate text-[12px] font-medium text-ink-muted">
+                {users.get(item.hit.message.authorId)?.displayName ?? 'Unknown'}
+              </span>
+              <span className="shrink-0 text-[11px] text-ink-faint">
+                {formatRelativeTime(item.hit.message.createdAt)}
+              </span>
+            </span>
+            {/* The highlight markup is produced and escaped by the server,
+                which wraps only matched terms in <mark>. */}
+            <span
+              className="mt-0.5 block truncate text-[12.5px] text-ink-dim"
+              dangerouslySetInnerHTML={{ __html: item.hit.highlight }}
+            />
+          </span>
+          <ArrowRight className="size-3.5 shrink-0 text-ink-faint" />
+        </>
+      )}
+
+      {item.kind === 'action' && (
+        <>
+          <span className="flex size-7 shrink-0 items-center justify-center rounded-md bg-hover/80 text-ink-dim [&>svg]:size-3.5">
+            {item.icon}
+          </span>
+          <span className="flex-1 text-[13.5px] font-medium text-ink">{item.label}</span>
+        </>
+      )}
+    </button>
+  );
+}
