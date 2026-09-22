@@ -174,3 +174,80 @@ function ProfileTab() {
     </div>
   );
 }
+
+/* ──────────────────────────────────────────────────────────── appearance ───*/
+
+function AppearanceTab() {
+  const self = useSession((s) => s.self);
+  const theme = useUi((s) => s.theme);
+  const compact = useUi((s) => s.compact);
+  const reduceMotion = useUi((s) => s.reduceMotion);
+
+  if (!self) return null;
+
+  return (
+    <div className="flex flex-col gap-6">
+      <FieldGroup title="Theme">
+        <SettingRow
+          title="Colour scheme"
+          description="System follows your operating system setting."
+          control={
+            <Segmented
+              value={theme}
+              onChange={(next) => void updatePreferences({ theme: next })}
+              options={[
+                { value: 'dark', label: 'Dark', icon: <Moon /> },
+                { value: 'light', label: 'Light', icon: <Sun /> },
+                { value: 'system', label: 'System', icon: <Monitor /> },
+              ]}
+            />
+          }
+        />
+      </FieldGroup>
+
+      <FieldGroup title="Density and motion">
+        <SettingRow
+          title="Compact messages"
+          description="Tightens vertical spacing so more of the conversation fits on screen."
+          control={
+            <Switch
+              checked={compact}
+              label="Compact messages"
+              onChange={(next) => void updatePreferences({ compactDensity: next })}
+            />
+          }
+        />
+
+        <SettingRow
+          title="Reduce motion"
+          description="Disables transitions and the animated background. Your system setting is honoured automatically."
+          control={
+            <Switch
+              checked={reduceMotion}
+              label="Reduce motion"
+              onChange={(next) => void updatePreferences({ reduceMotion: next })}
+            />
+          }
+        />
+      </FieldGroup>
+
+      <FieldGroup title="Composer">
+        <SettingRow
+          title="Enter sends the message"
+          description={
+            self.preferences.enterToSend
+              ? 'Shift+Enter inserts a line break.'
+              : 'Ctrl+Enter sends; Enter inserts a line break.'
+          }
+          control={
+            <Switch
+              checked={self.preferences.enterToSend}
+              label="Enter sends the message"
+              onChange={(next) => void updatePreferences({ enterToSend: next })}
+            />
+          }
+        />
+      </FieldGroup>
+    </div>
+  );
+}
