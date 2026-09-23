@@ -251,3 +251,57 @@ function AppearanceTab() {
     </div>
   );
 }
+
+/* ───────────────────────────────────────────────────────── notifications ───*/
+
+function NotificationsTab() {
+  const self = useSession((s) => s.self);
+  if (!self) return null;
+
+  return (
+    <div className="flex flex-col gap-6">
+      <FieldGroup
+        title="Desktop notifications"
+        description="Only unmuted conversations notify, and never while you are reading them in a focused window."
+      >
+        <SettingRow
+          title="Show notifications"
+          control={
+            <Switch
+              checked={self.preferences.desktopNotifications}
+              label="Show notifications"
+              onChange={(next) => void updatePreferences({ desktopNotifications: next })}
+            />
+          }
+        />
+
+        <SettingRow
+          title="Play a sound"
+          description="Uses your system notification sound."
+          control={
+            <Switch
+              checked={self.preferences.notificationSound}
+              disabled={!self.preferences.desktopNotifications}
+              label="Play a sound"
+              onChange={(next) => void updatePreferences({ notificationSound: next })}
+            />
+          }
+        />
+      </FieldGroup>
+
+      <FieldGroup title="Privacy">
+        <SettingRow
+          title="Share read receipts"
+          description="Lets others see when you have caught up. Turning this off also hides theirs from you."
+          control={
+            <Switch
+              checked={self.preferences.showReadReceipts}
+              label="Share read receipts"
+              onChange={(next) => void updatePreferences({ showReadReceipts: next })}
+            />
+          }
+        />
+      </FieldGroup>
+    </div>
+  );
+}
