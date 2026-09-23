@@ -65,3 +65,19 @@ export function App() {
     </div>
   );
 }
+
+/**
+ * Shown only while the stored credentials are exchanged for a session — a few
+ * hundred milliseconds. Deliberately minimal: a spinner-heavy splash makes a
+ * fast launch feel slower than it is.
+ */
+function SplashScreen() {
+  return (
+    <div className="flex flex-1 flex-col items-center justify-center gap-4">
+      <Logo size={40} className="opacity-90" />
+      <div className="h-0.5 w-28 overflow-hidden rounded-full bg-hover">
+        <div className="skeleton h-full w-full" />
+      </div>
+    </div>
+  );
+}
