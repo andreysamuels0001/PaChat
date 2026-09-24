@@ -235,3 +235,47 @@ Enter pressed
 The text is never lost, and a retry can never duplicate the message.
 
 ---
+
+## 5 · Failure handling
+
+| Failure                      | Behaviour                                                                                                                                                                                  |
+| :--------------------------- | :----------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------- |
+| Access token expires         | The gateway rejects the handshake with `UNAUTHORIZED`; the client refreshes and Socket.IO's next automatic attempt carries the new token. One refresh is shared across concurrent callers. |
+| Network drops                | Reconnection with backoff + jitter, capped at 8 s. Connection-state recovery replays frames missed during a brief drop instead of forcing a full re-bootstrap.                             |
+| Server unreachable at launch | A stored refresh token is **kept**, not discarded — the user is offline, not signed out. Only an actual rejection clears it.                                                               |
+| Protocol mismatch            | Retrying forever is pointless, so the client stops and surfaces "update required".                                                                                                         |
+| Send fails                   | The optimistic bubble stays, marked failed, with retry and discard.                                                                                                                        |
+| Read receipt lost            | Self-heals on the next message or reconnect; never surfaced as an error.                                                                                                                   |
+| A handler throws             | Normalised to `AppError` and returned through the ack. Internal failures are flattened to a generic sentence so stack traces and SQL never reach a client.                                 |
+| Process crashes              | `uncaughtException` logs and exits. A crashed process that keeps listening is worse than one that stops, because it accepts connections it can no longer serve.                            |
+
+---
+
+## 6 · Boot and shutdown
+
+**Boot**, in dependency order:
+
+1. Open the database and apply its pragmas.
+2. Run pending migrations, each in its own transaction with its bookkeeping
+   insert, so a failure leaves the schema at the last fully applied version.
+3. Housekeeping — clear stale presence (every record claiming to be online
+   after a restart is a lie), prune expired sessions, delete never-attached
+   uploads.
+4. Start listening.
+
+**Shutdown** closes sockets _before_ the HTTP listener, so connected clients
+receive a clean disconnect and reconnect deliberately rather than discovering
+the drop via a ping timeout twenty seconds later. The WAL is checkpointed into
+the main database file so a copied `pachat.db` is complete on its own.
+
+---
+
+## 7 · Deliberate non-goals
+
+| Not built                          | Why                                                                                                                                                                                                 |
+| :--------------------------------- | :-------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------- |
+| Horizontal scaling / Redis adapter | PaChat targets a single self-hosted node. The in-memory presence and typing registries have zero operational surface; their interfaces are narrow enough that a shared store would touch two files. |
+| A full emoji keyboard              | Several megabytes of dataset plus a search index, for something most messages never use. Curated quick reactions cover the realistic cases.                                                         |
+| An image-processing dependency     | Intrinsic dimensions are a handful of byte offsets in a file header; `lib/image-size.ts` reads PNG, JPEG, GIF and WebP in under a hundred lines.                                                    |
+| A logging framework                | Structured JSON in production, aligned colour in development. Roughly eighty lines, no dependency.                                                                                                  |
+| Virtualised message list           | History is capped at 400 retained messages per conversation, which the browser handles comfortably. Virtualisation would break `scrollIntoView` for search results and reply jumps.                 |
