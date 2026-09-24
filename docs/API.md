@@ -287,3 +287,137 @@ The member room is what makes multi-device work: a change reaches every window
 a person has open, not only the one that caused it.
 
 ---
+
+# Types
+
+### `AuthResponse`
+
+```ts
+{
+  self: Self,
+  tokens: {
+    accessToken: string,
+    refreshToken: string,
+    accessExpiresAt: number   // epoch ms
+  }
+}
+```
+
+### `User`
+
+The public projection — safe to broadcast to any peer.
+
+```ts
+{
+  id: string,
+  username: string,
+  displayName: string,
+  avatarUrl: string | null,
+  accentColor: 'indigo' | 'violet' | 'cyan' | 'emerald'
+             | 'amber' | 'rose' | 'sky' | 'fuchsia',
+  title: string | null,
+  presence: {
+    state: 'online' | 'away' | 'busy' | 'offline',
+    message: string | null,
+    lastSeenAt: number
+  },
+  createdAt: number
+}
+```
+
+### `Self`
+
+`User` plus the private fields, sent only to its owner.
+
+```ts
+{
+  ...User,
+  email: string,
+  preferences: {
+    theme: 'dark' | 'light' | 'system',
+    accentColor: AccentColor,
+    enterToSend: boolean,
+    reduceMotion: boolean,
+    desktopNotifications: boolean,
+    notificationSound: boolean,
+    compactDensity: boolean,
+    showReadReceipts: boolean
+  }
+}
+```
+
+### `Message`
+
+```ts
+{
+  id: string,
+  conversationId: string,
+  authorId: string,
+  kind: 'text' | 'system',
+  body: string,                    // '' when deleted or attachment-only
+  attachments: Attachment[],
+  reactions: { emoji: string, count: number, userIds: string[] }[],
+  replyTo: {
+    id: string,
+    authorId: string,
+    excerpt: string,               // truncated to one line
+    isDeleted: boolean
+  } | null,
+  createdAt: number,
+  editedAt: number | null,
+  deletedAt: number | null         // tombstone: the row survives, the body does not
+}
+```
+
+### `Conversation`
+
+```ts
+{
+  id: string,
+  kind: 'direct' | 'channel',
+  name: string | null,             // null for direct messages
+  topic: string | null,
+  icon: string | null,             // single emoji
+  isPrivate: boolean,
+  members: {
+    userId: string,
+    role: 'owner' | 'admin' | 'member',
+    joinedAt: number,
+    lastReadAt: number
+  }[],
+  lastMessage: Message | null,     // denormalised for sidebar previews
+  unreadCount: number,             // ← per viewer
+  hasUnreadMention: boolean,       // ← per viewer
+  isMuted: boolean,                // ← per viewer
+  isPinned: boolean,               // ← per viewer
+  createdBy: string,
+  createdAt: number,
+  updatedAt: number
+}
+```
+
+### `HistoryPage`
+
+```ts
+{
+  conversationId: string,
+  messages: Message[],   // oldest-first, ready to prepend
+  hasMore: boolean       // false once the start is reached
+}
+```
+
+### `Attachment`
+
+```ts
+{
+  id: string,
+  name: string,
+  mimeType: string,
+  byteSize: number,
+  url: string,                     // server-relative: /files/<key>/<name>
+  width: number | null,            // present for images, so layout is reserved
+  height: number | null
+}
+```
+
+---
