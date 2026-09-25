@@ -125,3 +125,31 @@ you find a gap in it.
   user simply signs in each launch.
 - The access token is held **in memory only**. It is short-lived and
   re-derivable, so persisting it would widen the blast radius for no benefit.
+
+### Message rendering
+
+Author-supplied text is parsed into **real React elements**, never into an HTML
+string handed to `dangerouslySetInnerHTML`. Escaping is therefore not something
+that _can_ be forgotten: no message body is ever interpreted as markup, so
+there is no path from a message to injected HTML.
+
+The one exception is search-result highlighting, where the server escapes the
+body and inserts only `<mark>` delimiters.
+
+---
+
+## Known limitations
+
+Stated plainly, because an honest threat model is more useful than a
+reassuring one.
+
+| Limitation                                  | Context                                                                                                                                                                                         |
+| :------------------------------------------ | :---------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------- |
+| **No transport encryption by default**      | PaChat binds to `127.0.0.1`. Exposing it to a network means putting it behind a TLS-terminating reverse proxy. Running it unencrypted over the internet exposes tokens and messages in transit. |
+| **Messages are stored unencrypted at rest** | Anyone with filesystem access to `pachat.db` can read every message. Use disk encryption. End-to-end encryption for direct messages is on the roadmap and will ship properly or not at all.     |
+| **Attachments are stored unencrypted**      | Same model. Access control is enforced by the application, not by the filesystem.                                                                                                               |
+| **In-memory rate limiting**                 | Correct for a single node. It does not survive a restart and is not shared across instances.                                                                                                    |
+| **No audit log**                            | There is no record of who read what, or of administrative actions.                                                                                                                              |
+| **Trusts one proxy hop**                    | `trust proxy` is set to `1`. Behind a longer proxy chain, `req.ip` — and therefore IP rate limiting — can be spoofed.                                                                           |
+
+---
