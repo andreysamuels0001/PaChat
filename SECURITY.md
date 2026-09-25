@@ -153,3 +153,22 @@ reassuring one.
 | **Trusts one proxy hop**                    | `trust proxy` is set to `1`. Behind a longer proxy chain, `req.ip` — and therefore IP rate limiting — can be spoofed.                                                                           |
 
 ---
+
+## Hardening a deployment
+
+```bash
+NODE_ENV=production
+JWT_ACCESS_SECRET=$(node -e "console.log(require('crypto').randomBytes(48).toString('base64url'))")
+JWT_REFRESH_SECRET=$(node -e "console.log(require('crypto').randomBytes(48).toString('base64url'))")
+ALLOW_REGISTRATION=false        # invite accounts manually instead
+AUTH_RATE_LIMIT=10
+CORS_ORIGINS=https://pachat.your-domain.example
+```
+
+Then:
+
+- terminate TLS at a reverse proxy and never expose port 4000 directly
+- keep `DATA_DIR` on an encrypted volume
+- back up `pachat.db` **and** `UPLOAD_DIR` together — they reference each other
+- run the process as an unprivileged user
+- keep Node and Electron current; both ship security fixes regularly
