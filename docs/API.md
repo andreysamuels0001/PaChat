@@ -421,3 +421,37 @@ The public projection — safe to broadcast to any peer.
 ```
 
 ---
+
+# Limits and timings
+
+From [`constants.ts`](../packages/shared/src/constants.ts) — shared, so client
+and server limits can never drift apart.
+
+| Limit                          | Value                          |
+| :----------------------------- | :----------------------------- |
+| Message body                   | 4000 characters                |
+| Conversation topic             | 280 characters                 |
+| Display name                   | 48 characters                  |
+| Username                       | 3–24 characters, `[a-z0-9._-]` |
+| Password                       | 8–128 characters               |
+| Attachments per message        | 10                             |
+| Attachment size                | 25 MiB                         |
+| History page                   | 50 default, 100 maximum        |
+| Distinct reactions per message | 20                             |
+
+| Timing                   | Value              |
+| :----------------------- | :----------------- |
+| Typing TTL               | 5 s                |
+| Typing throttle (client) | 2 s                |
+| Heartbeat                | 25 s, 20 s timeout |
+| Presence grace period    | 10 s               |
+| Access token lifetime    | 15 min             |
+| Refresh token lifetime   | 30 days            |
+| Edit window              | 24 h               |
+
+| Rate limit      | Budget                                          |
+| :-------------- | :---------------------------------------------- |
+| Auth endpoints  | 20 / minute / IP (fixed window)                 |
+| `message:send`  | burst 10, refill 3/s (token bucket, per member) |
+| `message:react` | burst 25, refill 8/s                            |
+| `typing:ping`   | burst 20, refill 5/s                            |
