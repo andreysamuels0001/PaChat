@@ -121,3 +121,27 @@ A React Native client would reuse `@pachat/shared` unchanged.
 Per-channel pins and a personal saved-items list.
 
 ---
+
+## Explicit non-goals
+
+These are decisions, not omissions.
+
+| Not planned                          | Reasoning                                                                                                                                                                                                          |
+| :----------------------------------- | :----------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------- |
+| **A hosted service**                 | PaChat is self-hosted by design. Your conversations stay on your own server; that is the point of the project, not a limitation of it.                                                                             |
+| **Horizontal scaling**               | The in-memory presence and typing registries have zero operational surface and are correct for a single node. Their interfaces are narrow enough that a shared store would touch two files if the need ever arose. |
+| **Video and voice calls**            | A genuinely different product — SFU, TURN, echo cancellation, codec negotiation. Bolting a half-working version onto a text messenger serves nobody.                                                               |
+| **Bots and a plugin API**            | A public extension surface is a long-term compatibility commitment. Not until the core protocol has stopped moving.                                                                                                |
+| **A full emoji keyboard**            | Several megabytes of dataset plus a search index for something most messages never use. The curated set covers the realistic cases and the OS picker handles the rest.                                             |
+| **Markdown tables and nested lists** | Chat messages are sentences, not documents. The supported subset is what people actually type.                                                                                                                     |
+| **Read receipts you cannot disable** | They are already a privacy setting, and turning them off hides other people's from you too — reciprocity, rather than one-way observation.                                                                         |
+
+---
+
+## Contributing to the roadmap
+
+Open an issue describing the problem rather than the feature. The most useful
+reports explain what you were trying to do, what PaChat made you do instead, and
+how often it comes up.
+
+See [CONTRIBUTING.md](../CONTRIBUTING.md).
