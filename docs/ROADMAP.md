@@ -56,3 +56,39 @@ What PaChat does today, what is planned, and what it will deliberately never do.
 - [x] 34-check end-to-end protocol smoke test (`npm run test:e2e`)
 
 ---
+
+## Next — v1.1
+
+> Ordered by how much they improve daily use, not by how interesting they are
+> to build.
+
+### Message threads as side panels
+
+Replies currently resolve inline, which works well for a short back-and-forth
+and poorly for a long one. A right-hand thread panel with its own composer and
+unread count, without splitting the main log.
+
+### Voice notes
+
+Record in the composer, store as an attachment, play inline with a waveform.
+The attachment pipeline already handles arbitrary binaries; this is a recorder,
+a waveform renderer and a duration column.
+
+### Channel management UI
+
+Rename, re-topic, change the icon, promote to admin, and remove members. The
+repository and role checks exist; only the interface is missing.
+
+### Jump-to-date
+
+Keyset pagination makes "scroll to 14 March" cheap — an id can be synthesised
+from a timestamp, since the timestamp _is_ the id prefix.
+
+### Unit and integration test suite
+
+The smoke test covers the protocol end to end. What is missing is unit coverage
+of the pure logic that is easiest to get subtly wrong: `buildRows` grouping,
+`isGroupedWith`, the FTS query escaper, `readImageSize`, and the token-bucket
+limiter.
+
+---
