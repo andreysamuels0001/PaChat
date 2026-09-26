@@ -92,3 +92,32 @@ of the pure logic that is easiest to get subtly wrong: `buildRows` grouping,
 limiter.
 
 ---
+
+## Later — v1.2+
+
+### End-to-end encryption for direct messages
+
+The honest version of this is hard: key exchange, device trust, key rotation,
+and a decision about whether search works at all on encrypted content. It will
+ship when it can ship properly rather than as a checkbox.
+
+### Custom emoji and workspace branding
+
+Upload an emoji set and an accent ramp per deployment. The design system is
+already fully tokenised, so the branding half is mostly a settings surface.
+
+### Link unfurling
+
+Fetch Open Graph metadata server-side — never from the renderer, which must not
+make arbitrary outbound requests — and cache it by URL.
+
+### Mobile companion
+
+The contract package is platform-agnostic and the server is already remote-ready.
+A React Native client would reuse `@pachat/shared` unchanged.
+
+### Message pinning and bookmarks
+
+Per-channel pins and a personal saved-items list.
+
+---
