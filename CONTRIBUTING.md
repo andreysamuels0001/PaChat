@@ -116,3 +116,33 @@ state, an accessible name (`IconButton` enforces this in its type), and a
 non-colour signal for any state conveyed by colour.
 
 ---
+
+## Commit messages
+
+Conventional Commits, in the imperative:
+
+```
+feat(composer): upload images pasted from the clipboard
+fix(gateway): clear typing state when the last socket drops
+perf(repositories): batch reaction hydration into one query
+docs(api): document the typing:ping throttle
+refactor(store): split UI state out of the chat cache
+```
+
+Scopes in use: `shared`, `server`, `desktop`, `gateway`, `db`, `repositories`,
+`services`, `composer`, `store`, `ui`, `docs`, `ci`.
+
+---
+
+## Pull requests
+
+- **One concern per PR.** A refactor and a feature in the same diff are
+  reviewable separately and unreviewable together.
+- **Explain the why.** The diff shows what changed; the description should say
+  what problem it solves and what you considered instead.
+- **Include the reproduction** for a bug fix, and say how you verified it.
+- **Screenshots or a short clip** for any visible change, in both themes if it
+  touches colour.
+- **Call out protocol changes explicitly** — they affect every client.
+
+---
