@@ -146,3 +146,26 @@ Scopes in use: `shared`, `server`, `desktop`, `gateway`, `db`, `repositories`,
 - **Call out protocol changes explicitly** — they affect every client.
 
 ---
+
+## Reporting bugs
+
+Use the [bug report template](.github/ISSUE_TEMPLATE/bug_report.yml). The most
+useful reports include:
+
+1. What you expected, and what happened instead
+2. Exact steps from a seeded workspace (`npm run db:reset`)
+3. Your OS, Node version, and whether the client was packaged or `npm run dev`
+4. Gateway output with `LOG_LEVEL=debug`
+5. Renderer console output (View → Toggle Developer Tools)
+
+---
+
+## Security
+
+Do not open a public issue for a vulnerability. See [SECURITY.md](SECURITY.md).
+
+---
+
+## Licence
+
+Contributions are accepted under the [MIT Licence](LICENSE).
