@@ -57,3 +57,62 @@ All four should be green. CI runs the same commands.
 boundary sits where it does.
 
 ---
+
+## Conventions that matter
+
+### Change the contract first
+
+Anything that crosses the wire is declared in `@pachat/shared`. Add the schema
+there, then let the compile errors on both sides tell you what to update. This
+is the mechanism that keeps the client and server from drifting — please do not
+route around it by widening a type locally.
+
+### Migrations are append-only
+
+Never edit a released migration. Database copies in the wild have already
+applied it, so an edit produces two different schemas claiming the same version.
+Add a new entry instead.
+
+### Respect the layers
+
+Repositories do not know about HTTP or sockets. Services do not know about
+transports. Transports do not write SQL. The payoff is that authorisation lives
+in exactly one place (`assertMember`), so there is no second implementation to
+forget.
+
+### No new colour values
+
+If a component needs a colour, it is either an existing token or the design
+system is missing one — in which case add it to `tokens.css` for **both**
+themes. A one-off hex value is how a design system quietly stops being one.
+
+### Comments explain _why_
+
+The codebase documents the non-obvious decision, not the obvious mechanism:
+
+```ts
+// The cursor is MAX() in SQL rather than a read-compare-write in JS, so an
+// out-of-order ack from a second device cannot rewind it and resurrect
+// already-read messages as unread.
+```
+
+Not:
+
+```ts
+// Update the last read timestamp.
+```
+
+If a line needs no explanation, it needs no comment.
+
+### Keep motion within budget
+
+120–240 ms on `--ease`. If something needs to be slower to feel right, the
+problem is usually the easing or the distance, not the duration.
+
+### Accessibility is not optional
+
+New interactive elements need: a keyboard path, a visible `:focus-visible`
+state, an accessible name (`IconButton` enforces this in its type), and a
+non-colour signal for any state conveyed by colour.
+
+---
