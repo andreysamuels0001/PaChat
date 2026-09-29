@@ -1,0 +1,96 @@
+<svg xmlns="http://www.w3.org/2000/svg" width="1280" height="400" viewBox="0 0 1280 400" fill="none" role="img" aria-label="PaChat — real-time conversations, beautifully engineered">
+  <defs>
+    <linearGradient id="bg" x1="0" y1="0" x2="1280" y2="400" gradientUnits="userSpaceOnUse">
+      <stop stop-color="#0B0C10"/>
+      <stop offset="0.5" stop-color="#11131A"/>
+      <stop offset="1" stop-color="#0E0F16"/>
+    </linearGradient>
+
+    <radialGradient id="glowA" cx="0" cy="0" r="1" gradientTransform="translate(210 70) rotate(40) scale(460 380)" gradientUnits="userSpaceOnUse">
+      <stop stop-color="#6366F1" stop-opacity="0.45"/>
+      <stop offset="1" stop-color="#6366F1" stop-opacity="0"/>
+    </radialGradient>
+
+    <radialGradient id="glowB" cx="0" cy="0" r="1" gradientTransform="translate(1080 340) rotate(-30) scale(480 360)" gradientUnits="userSpaceOnUse">
+      <stop stop-color="#A855F7" stop-opacity="0.38"/>
+      <stop offset="1" stop-color="#A855F7" stop-opacity="0"/>
+    </radialGradient>
+
+    <radialGradient id="glowC" cx="0" cy="0" r="1" gradientTransform="translate(700 20) rotate(70) scale(300 420)" gradientUnits="userSpaceOnUse">
+      <stop stop-color="#22D3EE" stop-opacity="0.2"/>
+      <stop offset="1" stop-color="#22D3EE" stop-opacity="0"/>
+    </radialGradient>
+
+    <linearGradient id="mark" x1="30" y1="24" x2="118" y2="118" gradientUnits="userSpaceOnUse">
+      <stop stop-color="#818CF8"/>
+      <stop offset="0.55" stop-color="#6366F1"/>
+      <stop offset="1" stop-color="#A855F7"/>
+    </linearGradient>
+
+    <linearGradient id="trace" x1="180" y1="0" x2="1140" y2="0" gradientUnits="userSpaceOnUse">
+      <stop stop-color="#6366F1" stop-opacity="0"/>
+      <stop offset="0.18" stop-color="#818CF8" stop-opacity="0.85"/>
+      <stop offset="0.52" stop-color="#22D3EE" stop-opacity="0.95"/>
+      <stop offset="0.86" stop-color="#A855F7" stop-opacity="0.8"/>
+      <stop offset="1" stop-color="#A855F7" stop-opacity="0"/>
+    </linearGradient>
+
+    <pattern id="grid" width="32" height="32" patternUnits="userSpaceOnUse">
+      <path d="M32 0H0V32" stroke="#FFFFFF" stroke-opacity="0.028" stroke-width="1"/>
+    </pattern>
+  </defs>
+
+  <!-- Backdrop -->
+  <rect width="1280" height="400" fill="url(#bg)"/>
+  <rect width="1280" height="400" fill="url(#grid)"/>
+  <rect width="1280" height="400" fill="url(#glowA)"/>
+  <rect width="1280" height="400" fill="url(#glowB)"/>
+  <rect width="1280" height="400" fill="url(#glowC)"/>
+
+  <!-- Heartbeat trace spanning the full width -->
+  <path
+    d="M180 232 H400 l26 0 18-32 22 64 20-32 h118 l22 0 16-45 26 90 18-45 h150 l24 0 18-27 20 54 18-27 H1140"
+    stroke="url(#trace)" stroke-width="2.5" stroke-linecap="round" stroke-linejoin="round" fill="none" opacity="0.9"/>
+
+  <!-- Mark -->
+  <g transform="translate(96 96)">
+    <path
+      d="M48 4c21.5 0 37.5 13.8 37.5 32.1 0 18.3-16 32.1-37.5 32.1-4 0-7.9-.4-11.5-1.1l-15.3 9.3a2.7 2.7 0 0 1-4.1-2.6l1.2-13.6C10.8 54.9 10.5 45.9 10.5 36.6 10.5 18.3 26.5 4 48 4Z"
+      fill="url(#mark)"/>
+    <path d="M25.8 43.8h9.3l5.7-12.9 9.6 24.6 6.3-11.7h10.5"
+      stroke="white" stroke-width="5" stroke-linecap="round" stroke-linejoin="round" opacity="0.95"/>
+  </g>
+
+  <!-- Wordmark -->
+  <text x="212" y="132" fill="#E9EBF2" font-family="Inter, 'Segoe UI', system-ui, sans-serif" font-size="68" font-weight="650" letter-spacing="-2.4">PaChat</text>
+
+  <text x="214" y="176" fill="#A3A9BB" font-family="Inter, 'Segoe UI', system-ui, sans-serif" font-size="21" font-weight="450" letter-spacing="-0.2">Real-time conversations, beautifully engineered.</text>
+
+  <!-- Technology chips -->
+  <g font-family="Inter, 'Segoe UI', system-ui, sans-serif" font-size="13" font-weight="550" letter-spacing="0.2">
+    <g transform="translate(214 300)">
+      <rect width="104" height="30" rx="15" fill="#FFFFFF" fill-opacity="0.05" stroke="#FFFFFF" stroke-opacity="0.1"/>
+      <text x="52" y="20" fill="#C3CAFE" text-anchor="middle">Electron</text>
+    </g>
+    <g transform="translate(328 300)">
+      <rect width="112" height="30" rx="15" fill="#FFFFFF" fill-opacity="0.05" stroke="#FFFFFF" stroke-opacity="0.1"/>
+      <text x="56" y="20" fill="#C3CAFE" text-anchor="middle">React 19</text>
+    </g>
+    <g transform="translate(450 300)">
+      <rect width="124" height="30" rx="15" fill="#FFFFFF" fill-opacity="0.05" stroke="#FFFFFF" stroke-opacity="0.1"/>
+      <text x="62" y="20" fill="#C3CAFE" text-anchor="middle">TypeScript</text>
+    </g>
+    <g transform="translate(584 300)">
+      <rect width="118" height="30" rx="15" fill="#FFFFFF" fill-opacity="0.05" stroke="#FFFFFF" stroke-opacity="0.1"/>
+      <text x="59" y="20" fill="#C3CAFE" text-anchor="middle">Socket.IO</text>
+    </g>
+    <g transform="translate(712 300)">
+      <rect width="98" height="30" rx="15" fill="#FFFFFF" fill-opacity="0.05" stroke="#FFFFFF" stroke-opacity="0.1"/>
+      <text x="49" y="20" fill="#C3CAFE" text-anchor="middle">SQLite</text>
+    </g>
+    <g transform="translate(820 300)">
+      <rect width="128" height="30" rx="15" fill="#FFFFFF" fill-opacity="0.05" stroke="#FFFFFF" stroke-opacity="0.1"/>
+      <text x="64" y="20" fill="#C3CAFE" text-anchor="middle">Tailwind v4</text>
+    </g>
+  </g>
+</svg>
