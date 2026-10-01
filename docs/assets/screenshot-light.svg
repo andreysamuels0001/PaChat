@@ -1,0 +1,318 @@
+<svg xmlns="http://www.w3.org/2000/svg" width="1440" height="900" viewBox="0 0 1440 900" fill="none" role="img" aria-label="PaChat desktop application — light theme">
+  <defs>
+    <linearGradient id="accentL" x1="0" y1="0" x2="1" y2="1">
+      <stop stop-color="#4F46E5"/><stop offset="1" stop-color="#9333EA"/>
+    </linearGradient>
+    <linearGradient id="markL" x1="2" y1="2" x2="18" y2="18" gradientUnits="userSpaceOnUse">
+      <stop stop-color="#6366F1"/><stop offset="1" stop-color="#9333EA"/>
+    </linearGradient>
+    <clipPath id="winL"><rect width="1440" height="900" rx="12"/></clipPath>
+
+    <style>
+      .f { font-family: Inter, 'Segoe UI', system-ui, sans-serif; }
+      .m { font-family: 'JetBrains Mono', ui-monospace, monospace; }
+      .ink   { fill: #14171F; }
+      .muted { fill: #525A6B; }
+      .dim   { fill: #717A8C; }
+      .faint { fill: #9AA2B2; }
+      .b600 { font-weight: 600; } .b550 { font-weight: 550; } .b500 { font-weight: 500; }
+      .up { letter-spacing: 0.7px; text-transform: uppercase; }
+      .e { font-family: 'Segoe UI Emoji', 'Apple Color Emoji', 'Noto Color Emoji', 'Segoe UI Symbol', sans-serif; }
+    </style>
+  </defs>
+
+  <g clip-path="url(#winL)">
+    <rect width="1440" height="900" fill="#F7F8FA"/>
+
+    <!-- ── Title bar ───────────────────────────────────────────────────── -->
+    <rect width="1440" height="44" fill="#F7F8FA"/>
+    <line x1="0" y1="44" x2="1440" y2="44" stroke="#101420" stroke-opacity="0.07"/>
+
+    <g transform="translate(14 13)">
+      <path d="M10 1.5c4.5 0 7.8 2.9 7.8 6.7S14.5 14.9 10 14.9c-.8 0-1.6-.1-2.4-.2l-3.2 1.9a.6.6 0 0 1-.85-.54l.25-2.83C2.25 11.9 2.2 10 2.2 8.2 2.2 4.4 5.5 1.5 10 1.5Z" fill="url(#markL)"/>
+      <path d="M5.4 9.1h1.9l1.2-2.7 2 5.1 1.3-2.4h2.2" stroke="white" stroke-width="1.25" stroke-linecap="round" stroke-linejoin="round"/>
+    </g>
+    <text class="f b600 ink" x="42" y="27" font-size="12.5">PaChat</text>
+    <text class="f faint" x="84" y="27" font-size="12.5">/</text>
+    <text class="f b500 muted" x="94" y="27" font-size="12.5">#design</text>
+
+    <g transform="translate(584 8.5)">
+      <rect width="288" height="28" rx="7" fill="#ECEEF3" stroke="#101420" stroke-opacity="0.1"/>
+      <g transform="translate(9 8)" stroke="#9AA2B2" stroke-width="1.3" fill="none">
+        <circle cx="5" cy="5" r="4.2"/><path d="M8.3 8.3 11 11" stroke-linecap="round"/>
+      </g>
+      <text class="f faint" x="30" y="18.5" font-size="12">Search messages and channels</text>
+      <g transform="translate(228 6.5)">
+        <rect width="28" height="15" rx="3" fill="#FFFFFF" stroke="#101420" stroke-opacity="0.18"/>
+        <text class="f b600 dim" x="14" y="11" font-size="9.5" text-anchor="middle">Ctrl</text>
+      </g>
+      <g transform="translate(260 6.5)">
+        <rect width="18" height="15" rx="3" fill="#FFFFFF" stroke="#101420" stroke-opacity="0.18"/>
+        <text class="f b600 dim" x="9" y="11" font-size="9.5" text-anchor="middle">K</text>
+      </g>
+    </g>
+
+    <g stroke="#717A8C" stroke-width="1.3" stroke-linecap="round">
+      <path d="M1364 22h11"/>
+      <rect x="1396" y="17" width="10" height="10" rx="1.5" fill="none"/>
+      <path d="M1424.5 17.5 1433.5 26.5M1433.5 17.5 1424.5 26.5"/>
+    </g>
+
+    <!-- ── Sidebar ─────────────────────────────────────────────────────── -->
+    <rect y="44" width="288" height="856" fill="#ECEEF3" fill-opacity="0.75"/>
+    <line x1="288" y1="44" x2="288" y2="900" stroke="#101420" stroke-opacity="0.07"/>
+
+    <g transform="translate(20 76)">
+      <path d="M0 4.5 4 8.5 8 4.5" stroke="#9AA2B2" stroke-width="1.4" fill="none" stroke-linecap="round" stroke-linejoin="round"/>
+      <text class="f b600 faint up" x="15" y="9" font-size="10.5">Channels</text>
+      <text class="f faint" x="86" y="9" font-size="10.5" opacity="0.7">3</text>
+      <g transform="translate(240 1)" stroke="#717A8C" stroke-width="1.4" stroke-linecap="round">
+        <path d="M4 0v8M0 4h8"/>
+      </g>
+    </g>
+
+    <!-- #general -->
+    <g transform="translate(8 96)">
+      <rect x="8" y="8" width="32" height="32" rx="8" fill="#FFFFFF" stroke="#101420" stroke-opacity="0.06"/>
+      <text class="e" x="24" y="30" font-size="15" text-anchor="middle" fill="#14171F">🌐</text>
+      <text class="f b500 muted" x="50" y="23" font-size="13.5"># general</text>
+      <text class="f faint" x="248" y="23" font-size="11" text-anchor="end">42m</text>
+      <text class="f faint" x="50" y="38" font-size="12">Ada: @everyone the release notes dra…</text>
+      <g transform="translate(228 28)">
+        <rect width="22" height="18" rx="9" fill="#E11D48"/>
+        <text class="f" x="11" y="12.5" font-size="10.5" font-weight="700" fill="#FFFFFF" text-anchor="middle">3</text>
+      </g>
+    </g>
+
+    <!-- #engineering -->
+    <g transform="translate(8 148)">
+      <rect x="8" y="8" width="32" height="32" rx="8" fill="#FFFFFF" stroke="#101420" stroke-opacity="0.06"/>
+      <text class="e" x="24" y="30" font-size="15" text-anchor="middle" fill="#14171F">⚙️</text>
+      <text class="f b500 muted" x="50" y="23" font-size="13.5"># engineering</text>
+      <text class="f faint" x="248" y="23" font-size="11" text-anchor="end">2h</text>
+      <text class="f faint" x="50" y="38" font-size="12">Linus: WAL mode plus a 5s busy time…</text>
+    </g>
+
+    <!-- #design (active) -->
+    <g transform="translate(8 200)">
+      <rect width="272" height="48" rx="8" fill="#4F46E5" fill-opacity="0.11"/>
+      <rect x="0" y="16" width="2.5" height="16" rx="1.25" fill="#4F46E5"/>
+      <rect x="8" y="8" width="32" height="32" rx="8" fill="#4F46E5" fill-opacity="0.14"/>
+      <text class="e" x="24" y="30" font-size="15" text-anchor="middle" fill="#14171F">🎨</text>
+      <text class="f b500 ink" x="50" y="23" font-size="13.5"># design</text>
+      <text class="f faint" x="248" y="23" font-size="11" text-anchor="end">1h</text>
+      <text class="f faint" x="50" y="38" font-size="12">Katherine: Motion is all 120–220ms…</text>
+    </g>
+
+    <g transform="translate(20 276)">
+      <path d="M0 4.5 4 8.5 8 4.5" stroke="#9AA2B2" stroke-width="1.4" fill="none" stroke-linecap="round" stroke-linejoin="round"/>
+      <text class="f b600 faint up" x="15" y="9" font-size="10.5">Direct messages</text>
+      <text class="f faint" x="148" y="9" font-size="10.5" opacity="0.7">2</text>
+    </g>
+
+    <g transform="translate(8 296)">
+      <circle cx="24" cy="24" r="16" fill="#7C3AED"/>
+      <text class="f b600" x="24" y="28.5" font-size="11.5" fill="#FFFFFF" text-anchor="middle">GH</text>
+      <circle cx="36" cy="36" r="5" fill="#ECEEF3"/><circle cx="36" cy="36" r="3.4" fill="#059669"/>
+      <text class="f b500 muted" x="50" y="23" font-size="13.5">Grace Hopper</text>
+      <text class="f faint" x="248" y="23" font-size="11" text-anchor="end">12m</text>
+      <text class="f faint" x="50" y="38" font-size="12">Easy. Short version: every send car…</text>
+    </g>
+
+    <g transform="translate(8 348)">
+      <circle cx="24" cy="24" r="16" fill="#0891B2"/>
+      <text class="f b600" x="24" y="28.5" font-size="11.5" fill="#FFFFFF" text-anchor="middle">AT</text>
+      <circle cx="36" cy="36" r="5" fill="#ECEEF3"/><circle cx="36" cy="36" r="3.4" fill="#E11D48"/>
+      <text class="f muted" x="50" y="23" font-size="13.5">Alan Turing</text>
+      <text class="f faint" x="248" y="23" font-size="11" text-anchor="end">3h</text>
+      <text class="f faint" x="50" y="38" font-size="12">Deep work until 4</text>
+    </g>
+
+    <line x1="0" y1="836" x2="288" y2="836" stroke="#101420" stroke-opacity="0.07"/>
+    <g transform="translate(14 846)">
+      <circle cx="20" cy="22" r="16" fill="#D97706"/>
+      <text class="f b600" x="20" y="26.5" font-size="11.5" fill="#FFFFFF" text-anchor="middle">KJ</text>
+      <circle cx="32" cy="34" r="5" fill="#ECEEF3"/><circle cx="32" cy="34" r="3.4" fill="#059669"/>
+      <text class="f b500 ink" x="46" y="18" font-size="13">Katherine Johnson</text>
+      <text class="f faint" x="46" y="32" font-size="11.5">Staff Product Designer</text>
+      <g transform="translate(228 13)" stroke="#717A8C" stroke-width="1.35" fill="none">
+        <circle cx="9" cy="9" r="3"/>
+        <path d="M9 0.5v2.5M9 15v2.5M1.5 9H4M14 9h2.5M3.7 3.7l1.8 1.8M12.5 12.5l1.8 1.8M14.3 3.7l-1.8 1.8M5.5 12.5l-1.8 1.8" stroke-linecap="round"/>
+      </g>
+    </g>
+
+    <!-- ── Conversation header ─────────────────────────────────────────── -->
+    <g transform="translate(288 44)">
+      <line x1="0" y1="56" x2="888" y2="56" stroke="#101420" stroke-opacity="0.07"/>
+      <rect x="24" y="12" width="32" height="32" rx="8" fill="#FFFFFF" stroke="#101420" stroke-opacity="0.06"/>
+      <text class="e" x="40" y="34" font-size="16" text-anchor="middle" fill="#14171F">🎨</text>
+      <text class="f b600 ink" x="68" y="26" font-size="14.5">#design</text>
+      <text class="f faint" x="68" y="42" font-size="12">Design system, motion, critique</text>
+
+      <g transform="translate(736 18)" stroke="#717A8C" stroke-width="1.4" fill="none" stroke-linecap="round" stroke-linejoin="round">
+        <path d="M4 14V8l5-4 5 4v6M2 14h14"/>
+        <g transform="translate(36 1)">
+          <path d="M3 7a5 5 0 0 1 10 0c0 4 1.5 5 1.5 5H1.5S3 11 3 7Z"/>
+          <path d="M6.5 15a1.8 1.8 0 0 0 3 0"/>
+        </g>
+        <g transform="translate(72 2)" stroke="#4F46E5">
+          <circle cx="5.5" cy="4.5" r="2.6"/><path d="M1 14c0-2.8 2-4.6 4.5-4.6S10 11.2 10 14"/>
+          <path d="M12 14c0-2.4-.8-3.8-2-4.4" stroke-opacity="0.7"/>
+        </g>
+      </g>
+      <rect x="800" y="14" width="30" height="30" rx="7" fill="#4F46E5" fill-opacity="0.12"/>
+    </g>
+
+    <!-- ── Message log ─────────────────────────────────────────────────── -->
+    <g transform="translate(288 120)">
+      <line x1="24" y1="10" x2="382" y2="10" stroke="#101420" stroke-opacity="0.07"/>
+      <rect x="394" y="0" width="100" height="20" rx="10" fill="#FFFFFF" stroke="#101420" stroke-opacity="0.07"/>
+      <text class="f b500 dim" x="444" y="14" font-size="11" text-anchor="middle">Yesterday</text>
+      <line x1="506" y1="10" x2="864" y2="10" stroke="#101420" stroke-opacity="0.07"/>
+    </g>
+
+    <!-- Katherine (leading) -->
+    <g transform="translate(288 154)">
+      <circle cx="40" cy="16" r="16" fill="#D97706"/>
+      <text class="f b600" x="40" y="20.5" font-size="11.5" fill="#FFFFFF" text-anchor="middle">KJ</text>
+      <circle cx="52" cy="28" r="5" fill="#F7F8FA"/><circle cx="52" cy="28" r="3.4" fill="#059669"/>
+      <text class="f b600" x="68" y="12" font-size="13.5" fill="#D97706">Katherine Johnson</text>
+      <text class="f faint" x="196" y="12" font-size="11">Staff Product Designer</text>
+      <text class="f faint" x="320" y="12" font-size="11">10:22</text>
+      <text class="f ink" x="68" y="32" font-size="13.5">Shipped the token pass: one accent ramp, one neutral ramp, and every</text>
+      <text class="f ink" x="68" y="52" font-size="13.5">surface derives from them. No more one-off hex values.</text>
+
+      <g transform="translate(68 64)">
+        <rect width="46" height="22" rx="11" fill="#4F46E5" fill-opacity="0.12" stroke="#4F46E5" stroke-opacity="0.4"/>
+        <text class="e" x="13" y="15.5" font-size="12.5" fill="#14171F">❤️</text>
+        <text class="f b500" x="32" y="15" font-size="11.5" fill="#4F46E5">2</text>
+      </g>
+    </g>
+
+    <!-- Grace with reply spine -->
+    <g transform="translate(288 266)">
+      <g transform="translate(68 0)">
+        <path d="M0 11V3h14" stroke="#D97706" stroke-opacity="0.55" stroke-width="2" fill="none" stroke-linecap="round"/>
+        <text class="f b500" x="22" y="8" font-size="11.5" fill="#D97706">Katherine Johnson</text>
+        <text class="f dim" x="140" y="8" font-size="11.5">Shipped the token pass: one accent ramp, one neutral…</text>
+      </g>
+
+      <circle cx="40" cy="30" r="16" fill="#7C3AED"/>
+      <text class="f b600" x="40" y="34.5" font-size="11.5" fill="#FFFFFF" text-anchor="middle">GH</text>
+      <circle cx="52" cy="42" r="5" fill="#F7F8FA"/><circle cx="52" cy="42" r="3.4" fill="#059669"/>
+      <text class="f b600" x="68" y="26" font-size="13.5" fill="#7C3AED">Grace Hopper</text>
+      <text class="f faint" x="178" y="26" font-size="11">Director of Engineering</text>
+      <text class="f faint" x="318" y="26" font-size="11">11:31</text>
+      <text class="f ink" x="68" y="46" font-size="13.5">The density toggle is the detail I keep coming back to. Compact mode</text>
+      <text class="f ink" x="68" y="66" font-size="13.5">makes long channels genuinely scannable.</text>
+    </g>
+
+    <!-- Katherine again, with code + attachment -->
+    <g transform="translate(288 364)">
+      <circle cx="40" cy="16" r="16" fill="#D97706"/>
+      <text class="f b600" x="40" y="20.5" font-size="11.5" fill="#FFFFFF" text-anchor="middle">KJ</text>
+      <circle cx="52" cy="28" r="5" fill="#F7F8FA"/><circle cx="52" cy="28" r="3.4" fill="#059669"/>
+      <text class="f b600" x="68" y="12" font-size="13.5" fill="#D97706">Katherine Johnson</text>
+      <text class="f faint" x="196" y="12" font-size="11">12:05</text>
+      <text class="f ink" x="68" y="32" font-size="13.5">Motion is all 120–220ms with a single easing curve:</text>
+
+      <g transform="translate(68 44)">
+        <rect width="620" height="54" rx="10" fill="#ECEEF3" stroke="#101420" stroke-opacity="0.07"/>
+        <text class="m" x="14" y="24" font-size="11.5" fill="#4F46E5">--ease</text>
+        <text class="m" x="68" y="24" font-size="11.5" fill="#14171F">: cubic-bezier(0.22, 1, 0.36, 1);</text>
+        <text class="m" x="14" y="44" font-size="11.5" fill="#9AA2B2">/* fast out, gentle settle */</text>
+      </g>
+
+      <text class="f ink" x="68" y="124" font-size="13.5">…and it is fully disabled when the OS asks for reduced motion.</text>
+
+      <g transform="translate(68 140)">
+        <rect width="340" height="52" rx="10" fill="#FFFFFF" stroke="#101420" stroke-opacity="0.08"/>
+        <rect x="12" y="10" width="32" height="32" rx="8" fill="#ECEEF3"/>
+        <g transform="translate(22 19)" stroke="#717A8C" stroke-width="1.4" fill="none" stroke-linecap="round" stroke-linejoin="round">
+          <path d="M1 1h7l4 4v9H1z"/><path d="M8 1v4h4"/>
+        </g>
+        <text class="f b500 ink" x="54" y="25" font-size="13">motion-tokens.css</text>
+        <text class="f faint" x="54" y="39" font-size="11.5">3.2 KB</text>
+        <g transform="translate(304 20)" stroke="#717A8C" stroke-width="1.4" fill="none" stroke-linecap="round" stroke-linejoin="round">
+          <path d="M6 0v9M2 6l4 4 4-4M0 13h12"/>
+        </g>
+      </g>
+
+      <g transform="translate(68 204)">
+        <rect width="46" height="22" rx="11" fill="#4F46E5" fill-opacity="0.12" stroke="#4F46E5" stroke-opacity="0.4"/>
+        <text class="e" x="13" y="15.5" font-size="12.5" fill="#14171F">✅</text>
+        <text class="f b500" x="32" y="15" font-size="11.5" fill="#4F46E5">1</text>
+      </g>
+    </g>
+
+    <!-- Typing -->
+    <g transform="translate(312 660)">
+      <circle cx="10" cy="10" r="10" fill="#7C3AED" stroke="#F7F8FA" stroke-width="2"/>
+      <text class="f b600" x="10" y="13.5" font-size="8.5" fill="#FFFFFF" text-anchor="middle">GH</text>
+      <g fill="#9AA2B2">
+        <circle cx="30" cy="10" r="2"/><circle cx="37" cy="7.5" r="2"/><circle cx="44" cy="10" r="2"/>
+      </g>
+      <text class="f dim" x="54" y="14" font-size="12" font-style="italic">Grace is typing</text>
+    </g>
+
+    <!-- ── Composer ────────────────────────────────────────────────────── -->
+    <g transform="translate(312 700)">
+      <rect y="32" width="840" height="106" rx="10" fill="#FFFFFF" stroke="#4F46E5" stroke-opacity="0.5"/>
+      <text class="f ink" x="16" y="58" font-size="13.5">Agreed — I will add the density toggle to the settings panel today and</text>
+      <text class="f ink" x="16" y="78" font-size="13.5">bind it to the compact spacing scale.</text>
+      <rect x="320" y="86" width="1.5" height="16" fill="#4F46E5"/>
+
+      <g transform="translate(12 108)" stroke="#717A8C" stroke-width="1.4" fill="none" stroke-linecap="round" stroke-linejoin="round">
+        <path d="M12.5 4.5 6 11a3 3 0 0 0 4.2 4.2l6.8-6.8a5 5 0 0 0-7-7L3 8.4"/>
+        <g transform="translate(34 2)">
+          <circle cx="8" cy="8" r="7.2"/><path d="M5.2 9.8a3.6 3.6 0 0 0 5.6 0"/>
+          <circle cx="5.6" cy="6.2" r="0.8" fill="#717A8C" stroke="none"/><circle cx="10.4" cy="6.2" r="0.8" fill="#717A8C" stroke="none"/>
+        </g>
+      </g>
+      <text class="f faint" x="690" y="124" font-size="11">Enter to send</text>
+      <g transform="translate(792 104)">
+        <rect width="36" height="36" rx="9" fill="url(#accentL)"/>
+        <path d="M11 18h14M19 12l6 6-6 6" stroke="white" stroke-width="1.8" fill="none" stroke-linecap="round" stroke-linejoin="round"/>
+      </g>
+    </g>
+
+    <!-- ── Member panel ────────────────────────────────────────────────── -->
+    <rect x="1176" y="44" width="264" height="856" fill="#ECEEF3" fill-opacity="0.55"/>
+    <line x1="1176" y1="44" x2="1176" y2="900" stroke="#101420" stroke-opacity="0.07"/>
+    <line x1="1176" y1="100" x2="1440" y2="100" stroke="#101420" stroke-opacity="0.07"/>
+    <text class="f b600 faint up" x="1200" y="76" font-size="11">Members · 3</text>
+
+    <text class="f b600 faint up" x="1200" y="132" font-size="10.5">Online</text>
+    <text class="f faint" x="1248" y="132" font-size="10.5" opacity="0.7">3</text>
+
+    <g transform="translate(1192 144)">
+      <circle cx="20" cy="22" r="16" fill="#D97706"/>
+      <text class="f b600" x="20" y="26.5" font-size="11.5" fill="#FFFFFF" text-anchor="middle">KJ</text>
+      <circle cx="32" cy="34" r="5" fill="#ECEEF3"/><circle cx="32" cy="34" r="3.4" fill="#059669"/>
+      <text class="f b500 ink" x="46" y="18" font-size="13">Katherine Johnson</text>
+      <text class="f faint" x="166" y="18" font-size="11">(you)</text>
+      <g transform="translate(196 10)"><path d="M0.5 7 2.5 1.5 5 5l2.5-3.5L9.5 7z" fill="#D97706"/></g>
+      <text class="f faint" x="46" y="32" font-size="11.5">Staff Product Designer</text>
+    </g>
+
+    <g transform="translate(1192 196)">
+      <circle cx="20" cy="22" r="16" fill="#4F46E5"/>
+      <text class="f b600" x="20" y="26.5" font-size="11.5" fill="#FFFFFF" text-anchor="middle">AL</text>
+      <circle cx="32" cy="34" r="5" fill="#ECEEF3"/><circle cx="32" cy="34" r="3.4" fill="#059669"/>
+      <text class="f b500 ink" x="46" y="18" font-size="13">Ada Lovelace</text>
+      <text class="f faint" x="46" y="32" font-size="11.5">Shipping the realtime layer</text>
+      <path d="M212 18l3 3 5-6" stroke="#059669" stroke-width="1.7" fill="none" stroke-linecap="round" stroke-linejoin="round"/>
+    </g>
+
+    <g transform="translate(1192 248)">
+      <circle cx="20" cy="22" r="16" fill="#7C3AED"/>
+      <text class="f b600" x="20" y="26.5" font-size="11.5" fill="#FFFFFF" text-anchor="middle">GH</text>
+      <circle cx="32" cy="34" r="5" fill="#ECEEF3"/><circle cx="32" cy="34" r="3.4" fill="#059669"/>
+      <text class="f b500 ink" x="46" y="18" font-size="13">Grace Hopper</text>
+      <text class="f faint" x="46" y="32" font-size="11.5">Director of Engineering</text>
+      <path d="M212 18l3 3 5-6" stroke="#059669" stroke-width="1.7" fill="none" stroke-linecap="round" stroke-linejoin="round"/>
+    </g>
+
+    <rect x="0.5" y="0.5" width="1439" height="899" rx="12" stroke="#101420" stroke-opacity="0.1" fill="none"/>
+  </g>
+</svg>
