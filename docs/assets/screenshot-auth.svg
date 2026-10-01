@@ -1,0 +1,149 @@
+<svg xmlns="http://www.w3.org/2000/svg" width="1440" height="900" viewBox="0 0 1440 900" fill="none" role="img" aria-label="The PaChat sign-in screen, with the product pitch on the left and the authentication form on the right">
+  <defs>
+    <linearGradient id="markA" x1="4" y1="3" x2="34" y2="35" gradientUnits="userSpaceOnUse">
+      <stop stop-color="#818CF8"/><stop offset="0.55" stop-color="#6366F1"/><stop offset="1" stop-color="#A855F7"/>
+    </linearGradient>
+    <linearGradient id="accentA" x1="0" y1="0" x2="1" y2="1">
+      <stop stop-color="#6366F1"/><stop offset="1" stop-color="#A855F7"/>
+    </linearGradient>
+
+    <radialGradient id="auroraA" cx="0" cy="0" r="1" gradientTransform="translate(180 60) rotate(40) scale(620 520)" gradientUnits="userSpaceOnUse">
+      <stop stop-color="#6366F1" stop-opacity="0.42"/><stop offset="1" stop-color="#6366F1" stop-opacity="0"/>
+    </radialGradient>
+    <radialGradient id="auroraB" cx="0" cy="0" r="1" gradientTransform="translate(1240 620) rotate(-30) scale(560 460)" gradientUnits="userSpaceOnUse">
+      <stop stop-color="#A855F7" stop-opacity="0.34"/><stop offset="1" stop-color="#A855F7" stop-opacity="0"/>
+    </radialGradient>
+    <radialGradient id="auroraC" cx="0" cy="0" r="1" gradientTransform="translate(520 860) rotate(-70) scale(420 520)" gradientUnits="userSpaceOnUse">
+      <stop stop-color="#22D3EE" stop-opacity="0.2"/><stop offset="1" stop-color="#22D3EE" stop-opacity="0"/>
+    </radialGradient>
+
+    <clipPath id="winA"><rect width="1440" height="900" rx="12"/></clipPath>
+
+    <style>
+      .f { font-family: Inter, 'Segoe UI', system-ui, sans-serif; }
+      .m { font-family: 'JetBrains Mono', ui-monospace, monospace; }
+      .ink   { fill: #E9EBF2; }
+      .muted { fill: #A3A9BB; }
+      .dim   { fill: #6C7384; }
+      .faint { fill: #4A505F; }
+      .acc   { fill: #A0A8FB; }
+      .b650 { font-weight: 650; } .b600 { font-weight: 600; } .b500 { font-weight: 500; }
+      .e { font-family: 'Segoe UI Emoji', 'Apple Color Emoji', 'Noto Color Emoji', 'Segoe UI Symbol', sans-serif; }
+    </style>
+  </defs>
+
+  <g clip-path="url(#winA)">
+    <rect width="1440" height="900" fill="#0B0C10"/>
+    <rect width="1440" height="900" fill="url(#auroraA)"/>
+    <rect width="1440" height="900" fill="url(#auroraB)"/>
+    <rect width="1440" height="900" fill="url(#auroraC)"/>
+
+    <!-- ── Title bar ───────────────────────────────────────────────────── -->
+    <rect width="1440" height="44" fill="#0B0C10" fill-opacity="0.55"/>
+    <g stroke="#6C7384" stroke-width="1.3" stroke-linecap="round">
+      <path d="M1364 22h11"/>
+      <rect x="1396" y="17" width="10" height="10" rx="1.5" fill="none"/>
+      <path d="M1424.5 17.5 1433.5 26.5M1433.5 17.5 1424.5 26.5"/>
+    </g>
+
+    <!-- ── Left: the pitch ─────────────────────────────────────────────── -->
+    <g transform="translate(96 96)">
+      <!-- Wordmark -->
+      <g>
+        <path d="M19 2.5c8.5 0 14.8 5.5 14.8 12.7S27.5 27.9 19 27.9c-1.6 0-3.1-.15-4.55-.42l-6.05 3.68a1.07 1.07 0 0 1-1.61-1.02l.47-5.36C4.27 22.4 4.2 18.8 4.2 15.2 4.2 8 10.5 2.5 19 2.5Z" fill="url(#markA)"/>
+        <path d="M10.2 17.3h3.7l2.25-5.1 3.8 9.7 2.5-4.6h4.15" stroke="white" stroke-width="2.4" stroke-linecap="round" stroke-linejoin="round" opacity="0.95"/>
+        <text class="f b650 ink" x="48" y="27" font-size="26" letter-spacing="-0.6">PaChat</text>
+      </g>
+    </g>
+
+    <g transform="translate(96 300)">
+      <text class="f b650 ink" x="0" y="0" font-size="40" letter-spacing="-1.2">Conversations that</text>
+      <text class="f b650 ink" x="0" y="44" font-size="40" letter-spacing="-1.2">arrive the instant</text>
+      <text class="f b650 ink" x="0" y="88" font-size="40" letter-spacing="-1.2">they are sent.</text>
+
+      <text class="f muted" x="0" y="140" font-size="15">A self-hosted desktop messenger with presence, typing</text>
+      <text class="f muted" x="0" y="164" font-size="15">indicators, read receipts, threaded replies and full-text</text>
+      <text class="f muted" x="0" y="188" font-size="15">search — built on a single typed realtime protocol.</text>
+
+      <!-- Highlights -->
+      <g transform="translate(0 228)">
+        <rect width="28" height="28" rx="8" fill="#6366F1" fill-opacity="0.1" stroke="#6366F1" stroke-opacity="0.22"/>
+        <path d="M15.5 7.5 9 16h4l-1 6 6.5-8.5h-4z" fill="#A0A8FB"/>
+        <text class="f muted" x="42" y="19" font-size="13.5">Optimistic sends with idempotent retries</text>
+      </g>
+      <g transform="translate(0 272)">
+        <rect width="28" height="28" rx="8" fill="#6366F1" fill-opacity="0.1" stroke="#6366F1" stroke-opacity="0.22"/>
+        <path d="M14 7.5l1.6 4.1 4.4.3-3.4 2.8 1.1 4.3-3.7-2.4-3.7 2.4 1.1-4.3-3.4-2.8 4.4-.3z" fill="#A0A8FB"/>
+        <text class="f muted" x="42" y="19" font-size="13.5">Your data stays on your own server</text>
+      </g>
+    </g>
+
+    <text class="f faint" x="96" y="804" font-size="12">Crafted by Andrey Samuels · MIT licensed · Open source</text>
+
+    <!-- ── Right: the form ─────────────────────────────────────────────── -->
+    <g transform="translate(888 168)">
+      <rect width="424" height="572" rx="20" fill="#11131A" fill-opacity="0.86" stroke="#FFFFFF" stroke-opacity="0.1"/>
+
+      <text class="f b650 ink" x="40" y="68" font-size="20" letter-spacing="-0.4">Welcome back</text>
+      <text class="f dim" x="40" y="92" font-size="13">Sign in to pick up where you left off.</text>
+
+      <!-- Email field -->
+      <text class="f b500 muted" x="40" y="134" font-size="12">Email or username</text>
+      <g transform="translate(40 144)">
+        <rect width="344" height="42" rx="10" fill="#07080C" stroke="#6366F1" stroke-opacity="0.6"/>
+        <rect x="-3" y="-3" width="350" height="48" rx="13" fill="none" stroke="#6366F1" stroke-opacity="0.18" stroke-width="3"/>
+        <g transform="translate(14 13)" stroke="#6C7384" stroke-width="1.35" fill="none">
+          <circle cx="8" cy="8" r="7.2"/>
+          <path d="M8 4.6v4.2M8 11.2v0.6" stroke-linecap="round" transform="rotate(180 8 8)"/>
+        </g>
+        <text class="f ink" x="42" y="26" font-size="14">ada@pachat.app</text>
+        <rect x="150" y="12" width="1.5" height="18" fill="#818CF8"/>
+      </g>
+
+      <!-- Password field -->
+      <text class="f b500 muted" x="40" y="222" font-size="12">Password</text>
+      <g transform="translate(40 232)">
+        <rect width="344" height="42" rx="10" fill="#07080C" stroke="#FFFFFF" stroke-opacity="0.1"/>
+        <g transform="translate(14 13)" stroke="#6C7384" stroke-width="1.35" fill="none" stroke-linecap="round" stroke-linejoin="round">
+          <rect x="2" y="7" width="12" height="9" rx="2"/>
+          <path d="M5 7V5a3 3 0 0 1 6 0v2"/>
+        </g>
+        <g fill="#6C7384">
+          <circle cx="46" cy="21" r="2.6"/><circle cx="57" cy="21" r="2.6"/><circle cx="68" cy="21" r="2.6"/>
+          <circle cx="79" cy="21" r="2.6"/><circle cx="90" cy="21" r="2.6"/><circle cx="101" cy="21" r="2.6"/>
+          <circle cx="112" cy="21" r="2.6"/><circle cx="123" cy="21" r="2.6"/>
+        </g>
+        <g transform="translate(310 13)" stroke="#4A505F" stroke-width="1.35" fill="none">
+          <path d="M1 8s2.8-4.6 7-4.6S15 8 15 8s-2.8 4.6-7 4.6S1 8 1 8Z"/>
+          <circle cx="8" cy="8" r="2.1"/>
+        </g>
+      </g>
+
+      <!-- Submit -->
+      <g transform="translate(40 300)">
+        <rect width="344" height="44" rx="10" fill="url(#accentA)"/>
+        <text class="f b600" x="150" y="28" font-size="14.5" fill="#FFFFFF" text-anchor="middle">Sign in</text>
+        <path d="M196 22h14M204 16l6 6-6 6" stroke="white" stroke-width="1.8" fill="none" stroke-linecap="round" stroke-linejoin="round"/>
+      </g>
+
+      <text class="f dim" x="212" y="378" font-size="12.5" text-anchor="middle">Don&apos;t have an account?</text>
+      <text class="f b500 acc" x="330" y="378" font-size="12.5">Create one</text>
+
+      <!-- Demo credentials panel -->
+      <g transform="translate(40 406)">
+        <rect width="344" height="62" rx="10" fill="#07080C" fill-opacity="0.65" stroke="#FFFFFF" stroke-opacity="0.06"/>
+        <text class="f b600 faint" x="14" y="22" font-size="10.5" letter-spacing="0.7">DEMO WORKSPACE</text>
+        <text class="m muted" x="14" y="44" font-size="11.5">ada@pachat.app · pachat123</text>
+        <text class="f b500 acc" x="320" y="44" font-size="11.5" text-anchor="end">Use</text>
+      </g>
+
+      <!-- Connection pill -->
+      <g transform="translate(40 500)">
+        <circle cx="6" cy="10" r="4" fill="#34D399"/>
+        <text class="f faint" x="20" y="14" font-size="11.5">Gateway reachable · protocol v1</text>
+      </g>
+    </g>
+
+    <rect x="0.5" y="0.5" width="1439" height="899" rx="12" stroke="#FFFFFF" stroke-opacity="0.09" fill="none"/>
+  </g>
+</svg>
