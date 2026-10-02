@@ -1,0 +1,207 @@
+<svg xmlns="http://www.w3.org/2000/svg" width="1440" height="900" viewBox="0 0 1440 900" fill="none" role="img" aria-label="The PaChat settings dialog, showing theme, density and motion preferences">
+  <defs>
+    <linearGradient id="markS" x1="2" y1="2" x2="18" y2="18" gradientUnits="userSpaceOnUse">
+      <stop stop-color="#818CF8"/><stop offset="1" stop-color="#A855F7"/>
+    </linearGradient>
+    <radialGradient id="ambientS" cx="0" cy="0" r="1" gradientTransform="translate(720 160) rotate(60) scale(620 500)" gradientUnits="userSpaceOnUse">
+      <stop stop-color="#6366F1" stop-opacity="0.14"/><stop offset="1" stop-color="#6366F1" stop-opacity="0"/>
+    </radialGradient>
+    <clipPath id="winS"><rect width="1440" height="900" rx="12"/></clipPath>
+
+    <style>
+      .f { font-family: Inter, 'Segoe UI', system-ui, sans-serif; }
+      .ink   { fill: #E9EBF2; }
+      .muted { fill: #A3A9BB; }
+      .dim   { fill: #6C7384; }
+      .faint { fill: #4A505F; }
+      .b600 { font-weight: 600; } .b500 { font-weight: 500; }
+      .up { letter-spacing: 0.7px; text-transform: uppercase; }
+      .e { font-family: 'Segoe UI Emoji', 'Apple Color Emoji', 'Noto Color Emoji', 'Segoe UI Symbol', sans-serif; }
+    </style>
+  </defs>
+
+  <g clip-path="url(#winS)">
+    <!-- ── Dimmed application behind the scrim ─────────────────────────── -->
+    <rect width="1440" height="900" fill="#0B0C10"/>
+    <rect width="1440" height="900" fill="url(#ambientS)"/>
+
+    <g opacity="0.3">
+      <rect width="1440" height="44" fill="#0B0C10"/>
+      <line x1="0" y1="44" x2="1440" y2="44" stroke="#FFFFFF" stroke-opacity="0.06"/>
+      <g transform="translate(14 13)">
+        <path d="M10 1.5c4.5 0 7.8 2.9 7.8 6.7S14.5 14.9 10 14.9c-.8 0-1.6-.1-2.4-.2l-3.2 1.9a.6.6 0 0 1-.85-.54l.25-2.83C2.25 11.9 2.2 10 2.2 8.2 2.2 4.4 5.5 1.5 10 1.5Z" fill="url(#markS)"/>
+      </g>
+      <text class="f b600 ink" x="42" y="27" font-size="12.5">PaChat</text>
+
+      <rect y="44" width="288" height="856" fill="#07080C" fill-opacity="0.55"/>
+      <line x1="288" y1="44" x2="288" y2="900" stroke="#FFFFFF" stroke-opacity="0.06"/>
+      <g transform="translate(28 100)" fill="#1D212C">
+        <rect width="200" height="12" rx="6"/>
+        <rect y="40" width="168" height="12" rx="6"/>
+        <rect y="80" width="184" height="12" rx="6"/>
+        <rect y="150" width="140" height="12" rx="6"/>
+        <rect y="190" width="176" height="12" rx="6"/>
+      </g>
+      <g transform="translate(336 170)" fill="#1D212C">
+        <circle cx="16" cy="16" r="16"/>
+        <rect x="44" y="4" width="120" height="11" rx="5.5"/>
+        <rect x="44" y="24" width="520" height="11" rx="5.5"/>
+        <circle cx="16" cy="106" r="16"/>
+        <rect x="44" y="94" width="100" height="11" rx="5.5"/>
+        <rect x="44" y="114" width="580" height="11" rx="5.5"/>
+        <rect x="44" y="134" width="430" height="11" rx="5.5"/>
+      </g>
+      <rect x="1176" y="44" width="264" height="856" fill="#07080C" fill-opacity="0.4"/>
+      <line x1="1176" y1="44" x2="1176" y2="900" stroke="#FFFFFF" stroke-opacity="0.06"/>
+    </g>
+
+    <rect width="1440" height="900" fill="#000000" fill-opacity="0.55"/>
+
+    <!-- ── Settings dialog ─────────────────────────────────────────────── -->
+    <g transform="translate(336 108)">
+      <rect width="768" height="624" rx="20" fill="#171A23" fill-opacity="0.97" stroke="#FFFFFF" stroke-opacity="0.12"/>
+
+      <!-- Header -->
+      <text class="f b600 ink" x="28" y="42" font-size="15">Settings</text>
+      <g transform="translate(722 24)" stroke="#9CA3B4" stroke-width="1.4" stroke-linecap="round">
+        <path d="M0 0l12 12M12 0L0 12"/>
+      </g>
+      <line x1="0" y1="62" x2="768" y2="62" stroke="#FFFFFF" stroke-opacity="0.07"/>
+
+      <!-- ── Left nav ──────────────────────────────────────────────────── -->
+      <g transform="translate(20 80)">
+        <!-- Profile -->
+        <g>
+          <rect width="168" height="36" rx="9" fill="transparent"/>
+          <g transform="translate(12 10)" stroke="#6C7384" stroke-width="1.4" fill="none" stroke-linecap="round" stroke-linejoin="round">
+            <circle cx="8" cy="5.5" r="3.2"/><path d="M2 15.5c0-3.3 2.7-5.4 6-5.4s6 2.1 6 5.4"/>
+          </g>
+          <text class="f muted" x="42" y="23" font-size="13">Profile</text>
+        </g>
+
+        <!-- Appearance (active) -->
+        <g transform="translate(0 40)">
+          <rect width="168" height="36" rx="9" fill="#6366F1" fill-opacity="0.14"/>
+          <g transform="translate(12 10)" stroke="#A0A8FB" stroke-width="1.4" fill="none" stroke-linecap="round" stroke-linejoin="round">
+            <path d="M8 1.5a6.5 6.5 0 1 0 0 13c1 0 1.6-.6 1.6-1.4 0-.7-.4-1.1-.9-1.5-.4-.3-.7-.7-.7-1.2 0-.8.7-1.4 1.5-1.4h1.1A3.9 3.9 0 0 0 14.5 7C14.5 3.9 11.6 1.5 8 1.5Z"/>
+            <circle cx="5" cy="6" r="0.9" fill="#A0A8FB" stroke="none"/>
+            <circle cx="8" cy="4.4" r="0.9" fill="#A0A8FB" stroke="none"/>
+            <circle cx="11" cy="6" r="0.9" fill="#A0A8FB" stroke="none"/>
+          </g>
+          <text class="f b500 ink" x="42" y="23" font-size="13">Appearance</text>
+        </g>
+
+        <!-- Notifications -->
+        <g transform="translate(0 80)">
+          <g transform="translate(12 10)" stroke="#6C7384" stroke-width="1.4" fill="none" stroke-linecap="round" stroke-linejoin="round">
+            <path d="M3 7a5 5 0 0 1 10 0c0 4 1.3 5 1.3 5H1.7S3 11 3 7Z"/>
+            <path d="M6.4 14.5a1.8 1.8 0 0 0 3.2 0"/>
+          </g>
+          <text class="f muted" x="42" y="23" font-size="13">Notifications</text>
+        </g>
+
+        <!-- Version footer -->
+        <text class="f faint" x="12" y="440" font-size="11">PaChat 1.0.0</text>
+        <text class="f faint" x="12" y="458" font-size="11">win32</text>
+      </g>
+
+      <!-- ── Right pane ────────────────────────────────────────────────── -->
+      <g transform="translate(220 80)">
+
+        <!-- Theme group -->
+        <text class="f b600 ink" x="0" y="14" font-size="13">Theme</text>
+
+        <g transform="translate(0 28)">
+          <rect width="520" height="52" rx="10" fill="#1D212C" fill-opacity="0.5"/>
+          <text class="f b500 ink" x="14" y="24" font-size="13">Colour scheme</text>
+          <text class="f dim" x="14" y="40" font-size="12">System follows your operating system setting.</text>
+
+          <!-- Segmented control -->
+          <g transform="translate(286 11)">
+            <rect width="220" height="30" rx="9" fill="#07080C" fill-opacity="0.6" stroke="#FFFFFF" stroke-opacity="0.1"/>
+            <!-- Dark (selected) -->
+            <g transform="translate(3 3)">
+              <rect width="70" height="24" rx="7" fill="#11131A"/>
+              <g transform="translate(9 6)" stroke="#E9EBF2" stroke-width="1.3" fill="none" stroke-linecap="round" stroke-linejoin="round">
+                <path d="M11 6.6A5 5 0 0 1 5.4 1 5.2 5.2 0 1 0 11 6.6Z"/>
+              </g>
+              <text class="f b500 ink" x="42" y="16" font-size="11.5" text-anchor="middle">Dark</text>
+            </g>
+            <!-- Light -->
+            <g transform="translate(75 3)">
+              <g transform="translate(8 6)" stroke="#6C7384" stroke-width="1.3" fill="none" stroke-linecap="round">
+                <circle cx="6" cy="6" r="2.6"/>
+                <path d="M6 0v1.6M6 10.4V12M0 6h1.6M10.4 6H12M1.8 1.8l1.1 1.1M9.1 9.1l1.1 1.1M10.2 1.8 9.1 2.9M2.9 9.1 1.8 10.2"/>
+              </g>
+              <text class="f dim" x="42" y="16" font-size="11.5" text-anchor="middle">Light</text>
+            </g>
+            <!-- System -->
+            <g transform="translate(145 3)">
+              <g transform="translate(8 6)" stroke="#6C7384" stroke-width="1.3" fill="none" stroke-linecap="round" stroke-linejoin="round">
+                <rect x="0.5" y="1" width="11" height="8" rx="1.4"/><path d="M4 11.5h4"/>
+              </g>
+              <text class="f dim" x="45" y="16" font-size="11.5" text-anchor="middle">System</text>
+            </g>
+          </g>
+        </g>
+
+        <!-- Density and motion -->
+        <text class="f b600 ink" x="0" y="112" font-size="13">Density and motion</text>
+
+        <g transform="translate(0 126)">
+          <rect width="520" height="52" rx="10" fill="transparent"/>
+          <text class="f b500 ink" x="14" y="24" font-size="13">Compact messages</text>
+          <text class="f dim" x="14" y="40" font-size="12">Tightens vertical spacing so more of the conversation fits.</text>
+          <!-- Switch: on -->
+          <g transform="translate(468 16)">
+            <rect width="38" height="22" rx="11" fill="#6366F1" stroke="#6366F1" stroke-opacity="0.5"/>
+            <circle cx="26" cy="11" r="8" fill="#FFFFFF"/>
+          </g>
+        </g>
+
+        <g transform="translate(0 182)">
+          <text class="f b500 ink" x="14" y="24" font-size="13">Reduce motion</text>
+          <text class="f dim" x="14" y="40" font-size="12">Disables transitions and the animated background.</text>
+          <!-- Switch: off -->
+          <g transform="translate(468 16)">
+            <rect width="38" height="22" rx="11" fill="#1D212C" stroke="#FFFFFF" stroke-opacity="0.18"/>
+            <circle cx="12" cy="11" r="8" fill="#FFFFFF" fill-opacity="0.9"/>
+          </g>
+        </g>
+
+        <!-- Composer -->
+        <text class="f b600 ink" x="0" y="282" font-size="13">Composer</text>
+
+        <g transform="translate(0 296)">
+          <text class="f b500 ink" x="14" y="24" font-size="13">Enter sends the message</text>
+          <text class="f dim" x="14" y="40" font-size="12">Shift+Enter inserts a line break.</text>
+          <g transform="translate(468 16)">
+            <rect width="38" height="22" rx="11" fill="#6366F1" stroke="#6366F1" stroke-opacity="0.5"/>
+            <circle cx="26" cy="11" r="8" fill="#FFFFFF"/>
+          </g>
+        </g>
+
+        <!-- Accent swatches -->
+        <text class="f b600 ink" x="0" y="396" font-size="13">Accent colour</text>
+        <g transform="translate(14 410)">
+          <circle cx="14" cy="14" r="14" fill="#818CF8"/>
+          <circle cx="14" cy="14" r="17.5" fill="none" stroke="#E9EBF2" stroke-width="2"/>
+          <circle cx="54" cy="14" r="14" fill="#A78BFA"/>
+          <circle cx="94" cy="14" r="14" fill="#22D3EE"/>
+          <circle cx="134" cy="14" r="14" fill="#34D399"/>
+          <circle cx="174" cy="14" r="14" fill="#FBBF24"/>
+          <circle cx="214" cy="14" r="14" fill="#FB7185"/>
+          <circle cx="254" cy="14" r="14" fill="#38BDF8"/>
+          <circle cx="294" cy="14" r="14" fill="#E879F9"/>
+        </g>
+        <text class="f faint" x="14" y="464" font-size="12">Used for your avatar, your name in messages, and reply spines.</text>
+      </g>
+
+      <!-- Footer note -->
+      <line x1="0" y1="568" x2="768" y2="568" stroke="#FFFFFF" stroke-opacity="0.07"/>
+      <text class="f faint" x="28" y="596" font-size="11.5">Preferences are stored on the server, so they follow your account to any machine.</text>
+    </g>
+
+    <rect x="0.5" y="0.5" width="1439" height="899" rx="12" stroke="#FFFFFF" stroke-opacity="0.09" fill="none"/>
+  </g>
+</svg>
