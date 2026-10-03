@@ -106,3 +106,27 @@ sharing and full-text search — over a single, strictly typed realtime protocol
 ---
 
 <br />
+
+## Why PaChat
+
+Most chat apps are either a thin wrapper around a hosted service or a toy demo
+that stops at "messages appear". PaChat is neither. It is a complete product
+built to answer a specific question:
+
+> **What does a real-time messenger look like when the hard parts are actually
+> solved — and the result still feels like a premium desktop app?**
+
+The hard parts, concretely:
+
+|                             | The problem                                                     | How PaChat solves it                                                                                                          |
+| :-------------------------- | :-------------------------------------------------------------- | :---------------------------------------------------------------------------------------------------------------------------- |
+| **Duplicate sends**         | A retry after a flaky reconnect posts the message twice.        | Every send carries a client-generated **nonce** under a unique `(author, nonce)` index. A retry resolves to the original row. |
+| **Lost drafts**             | Switching channels mid-sentence throws the text away.           | Drafts are held **per conversation** in the store, not in component state.                                                    |
+| **Scroll jumping**          | A new message yanks you out of the history you were reading.    | Sticky scroll follows new content **only when you are already at the bottom**.                                                |
+| **Shifting pagination**     | `OFFSET` pages shift under you as messages arrive.              | **Keyset pagination** over time-prefixed ids: `WHERE id < ?` is both filter and sort.                                         |
+| **Ghost typing indicators** | A client disconnects mid-keystroke; the indicator runs forever. | Each indicator carries its own TTL and is swept by a single process-wide janitor.                                             |
+| **Presence flapping**       | Every reload flashes the whole workspace offline.               | Presence is **derived from live sockets** with a grace period, and counts sockets per member for multi-window.                |
+| **Notification spam**       | A busy channel becomes an unusable stream of toasts.            | Four conditions must _all_ hold before the OS is notified — including "not already reading it in a focused window".           |
+| **Protocol drift**          | The client and server disagree after a deploy.                  | One shared package declares every payload. A breaking change **cannot compile on only one side**.                             |
+
+<br />
