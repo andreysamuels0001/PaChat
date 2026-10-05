@@ -195,3 +195,41 @@ The hard parts, concretely:
 </table>
 
 <br />
+
+## 🚀 Quick start
+
+> **Requirements** — Node.js **20.11+** (22 LTS recommended) and npm 10+.
+> Nothing else: no Docker, no database server, no cloud account.
+
+```bash
+# 1 · Clone
+git clone https://github.com/andreysamuels0001/pachat.git
+cd pachat
+
+# 2 · Install
+npm install
+
+# 3 · Provision — generates signing secrets, migrates the schema,
+#     and seeds a populated demo workspace
+npm run setup
+
+# 4 · Run the gateway and the desktop client together
+npm run dev
+```
+
+The Electron window opens on the sign-in screen. Use any seeded account:
+
+| Email                  | Password    | Role                    |
+| :--------------------- | :---------- | :---------------------- |
+| `ada@pachat.app`       | `pachat123` | Principal Engineer      |
+| `grace@pachat.app`     | `pachat123` | Director of Engineering |
+| `alan@pachat.app`      | `pachat123` | Research Lead           |
+| `katherine@pachat.app` | `pachat123` | Staff Product Designer  |
+| `linus@pachat.app`     | `pachat123` | Infrastructure          |
+
+> 💡 **See real-time actually working:** sign in as `ada@pachat.app`, then launch a
+> second client with `npm run dev:desktop` in another terminal and sign in as
+> `grace@pachat.app`. Type in one window and watch presence, typing indicators,
+> messages, reactions and read receipts land in the other.
+
+<br />
