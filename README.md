@@ -422,3 +422,46 @@ HTML at all.
 </details>
 
 <br />
+
+## 📁 Project structure
+
+```
+pachat/
+├── packages/
+│   └── shared/                      @pachat/shared — the contract layer
+│       └── src/
+│           ├── domain.ts            Zod schemas: users, conversations, messages
+│           ├── events.ts            Typed Socket.IO surface + ack envelope
+│           ├── http.ts              REST routes and payloads
+│           ├── constants.ts         Limits, timings, protocol version
+│           └── utils.ts             Ids, grouping, formatting, mentions
+│
+├── apps/
+│   ├── server/                      @pachat/server — the realtime gateway
+│   │   └── src/
+│   │       ├── main.ts              Boot, housekeeping, graceful shutdown
+│   │       ├── config/env.ts        Validated configuration
+│   │       ├── db/                  Connection, migrations, CLI, demo seed
+│   │       ├── lib/                 Logger, errors, tokens, limiters, image sniff
+│   │       ├── repositories/        Batched hydration, keyset pagination, FTS
+│   │       ├── services/            Chat, auth, presence, typing
+│   │       ├── http/                Express app, middleware, routes
+│   │       └── realtime/gateway.ts  Handshake, rooms, fan-out
+│   │
+│   └── desktop/                     @pachat/desktop — the Electron client
+│       └── src/
+│           ├── shared-ipc/          The privileged IPC contract
+│           ├── main/                Window, menu, secure vault, IPC handlers
+│           ├── preload/             The context bridge
+│           └── renderer/src/
+│               ├── styles/          Design tokens + Tailwind v4 theme
+│               ├── lib/             API, socket, markup, hooks, bridge
+│               ├── store/           Zustand stores + the realtime binding
+│               ├── components/      UI primitives, brand, window chrome
+│               └── features/        auth · chat · settings
+│
+├── docs/                            Architecture, design system, protocol
+└── scripts/                         setup.mjs · clean.mjs
+```
+
+<br />
