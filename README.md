@@ -253,3 +253,172 @@ Point a packaged client at a remote gateway with the `PACHAT_SERVER_URL`
 environment variable; it defaults to `http://127.0.0.1:4000`.
 
 <br />
+
+## 🏗 Architecture
+
+Three packages, one contract.
+
+```mermaid
+graph TB
+    subgraph Desktop["🖥️  @pachat/desktop · Electron"]
+        direction TB
+        Main["<b>Main process</b><br/>window · menu · tray<br/>safeStorage vault<br/>native notifications"]
+        Preload["<b>Preload bridge</b><br/>contextIsolation: true<br/>sandbox: true<br/>hand-written API only"]
+        Renderer["<b>Renderer · React 19</b><br/>Zustand stores<br/>Tailwind v4 design system<br/>framer-motion"]
+        Main <-->|"typed IPC"| Preload
+        Preload <-->|"window.pachat"| Renderer
+    end
+
+    subgraph Contract["📋  @pachat/shared"]
+        direction TB
+        Schemas["<b>Zod schemas</b><br/>domain · events · http"]
+        Types["<b>Derived types</b><br/>ClientToServerEvents<br/>ServerToClientEvents"]
+        Utils["<b>Pure helpers</b><br/>ids · grouping · formatting"]
+    end
+
+    subgraph Server["⚡  @pachat/server · Node"]
+        direction TB
+        Gateway["<b>Socket.IO gateway</b><br/>handshake auth<br/>room fan-out<br/>token-bucket limits"]
+        Services["<b>Services</b><br/>chat · auth<br/>presence · typing"]
+        Repos["<b>Repositories</b><br/>batched hydration<br/>keyset pagination"]
+        Store[("<b>SQLite</b><br/>WAL · FTS5<br/>foreign keys")]
+        Gateway --> Services --> Repos --> Store
+    end
+
+    Renderer -. "REST · credentials + uploads" .-> Server
+    Renderer <==>|"WebSocket · everything stateful"| Gateway
+    Renderer -.->|"imports"| Contract
+    Server -.->|"validates against"| Contract
+
+    classDef pkg fill:#11131A,stroke:#6366F1,stroke-width:2px,color:#E9EBF2
+    classDef node fill:#171A23,stroke:#2A3040,color:#A3A9BB
+    classDef db fill:#0B0C10,stroke:#A855F7,stroke-width:2px,color:#C3CAFE
+    class Desktop,Contract,Server pkg
+    class Main,Preload,Renderer,Schemas,Types,Utils,Gateway,Services,Repos node
+    class Store db
+```
+
+### The shape of a message send
+
+```mermaid
+sequenceDiagram
+    autonumber
+    participant U as User
+    participant R as Renderer
+    participant G as Gateway
+    participant D as SQLite
+    participant P as Peer clients
+
+    U->>R: Press Enter
+    R->>R: Mint nonce · render optimistic bubble · clear draft
+    R->>G: message:send { conversationId, nonce, body, replyToId }
+
+    G->>G: Zod validate · token bucket · assert membership
+    G->>D: BEGIN IMMEDIATE
+    Note over G,D: SELECT by (author, nonce) — a retry returns the original row
+    G->>D: INSERT message · claim attachments · bump conversation
+    G->>D: COMMIT
+
+    G-->>R: ack { message, nonce }
+    R->>R: Drop the optimistic bubble, keep the server's row
+    G-->>P: message:created { message }
+    G-->>P: conversation:upserted (per-member unread projection)
+
+    Note over R,P: On failure the bubble stays, marked "Not sent".<br/>Retry reuses the same nonce — the server deduplicates.
+```
+
+### Why these choices
+
+<details>
+<summary><b>SQLite, not Postgres</b></summary>
+
+<br />
+
+PaChat is a single-node, self-hosted service. An in-process store removes an
+entire deployment tier, connection pooling, and all network latency from every
+query. What makes it suitable for a concurrent realtime workload is the pragma
+configuration, not the default one:
+
+- **`journal_mode = WAL`** — readers proceed during writes, which matters when
+  every inbound message writes while the UI pages history.
+- **`synchronous = NORMAL`** — fsync at checkpoints rather than per
+  transaction. A crash can lose the last few milliseconds, never the database.
+- **`foreign_keys = ON`** — off by default in SQLite; PaChat relies on
+  `ON DELETE CASCADE` to clean up members, reactions and attachments.
+- **`busy_timeout = 5000`** — wait under contention instead of throwing
+  `SQLITE_BUSY`.
+- **FTS5 external-content index** — real BM25-ranked search without
+  duplicating message bodies.
+
+</details>
+
+<details>
+<summary><b>Time-prefixed ids, not UUIDs</b></summary>
+
+<br />
+
+Every id is a 24-character, URL-safe string: an 8-character base36 timestamp
+followed by 16 characters of CSPRNG randomness.
+
+Sorting by id therefore sorts by creation time. That single property means
+message history pages with a plain `WHERE conversation_id = ? AND id < ?`,
+served entirely by one `(conversation_id, id DESC)` index — no compound
+cursor, no tie-breaking on identical millisecond timestamps, and no `OFFSET`
+drift while new messages arrive mid-scroll.
+
+</details>
+
+<details>
+<summary><b>Two tokens, one opaque</b></summary>
+
+<br />
+
+The **access token** is a short-lived HS256 JWT. It is what the socket
+handshake carries, so the gateway authenticates a connection without touching
+the database.
+
+The **refresh token** is opaque, long-lived, and stored only as a SHA-256
+digest — a leaked table cannot be replayed into live sessions. It rotates on
+every use, so a stolen token is usable at most once before the legitimate
+client invalidates it, and theft surfaces as an unexpected sign-out rather than
+silent indefinite access.
+
+Logout takes effect **immediately** rather than at token expiry: every
+handshake re-checks that the session row is still live.
+
+</details>
+
+<details>
+<summary><b>A renderer with no privileges</b></summary>
+
+<br />
+
+The Electron renderer runs with `contextIsolation: true`,
+`nodeIntegration: false` and `sandbox: true`. It has no filesystem, no
+`require`, and no direct Electron access.
+
+Every privileged capability it has is a named channel in
+[`shared-ipc/contract.ts`](apps/desktop/src/shared-ipc/contract.ts), exposed
+through a hand-written preload bridge — never `ipcRenderer` itself, which
+would let the renderer address any channel in the main process and defeat the
+point of isolation. A strict CSP is injected at the session layer, and all
+navigation away from the bundle is routed to the OS browser.
+
+</details>
+
+<details>
+<summary><b>Message bodies are React nodes, never HTML</b></summary>
+
+<br />
+
+Author-supplied text is parsed into real React elements by
+[`lib/markup.tsx`](apps/desktop/src/renderer/src/lib/markup.tsx) — not into an
+HTML string handed to `dangerouslySetInnerHTML`.
+
+This means escaping is not something that _can_ be forgotten: no message body
+is ever interpreted as markup, so there is no path from a message to injected
+HTML at all.
+
+</details>
+
+<br />
