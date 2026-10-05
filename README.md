@@ -233,3 +233,23 @@ The Electron window opens on the sign-in screen. Use any seeded account:
 > messages, reactions and read receipts land in the other.
 
 <br />
+
+## 📦 Installation
+
+Build native installers for the current platform:
+
+```bash
+npm run package         # unpacked build in apps/desktop/release — fast smoke test
+npm run dist            # installers for the host platform
+```
+
+| Platform | Output                               | Target                       |
+| :------- | :----------------------------------- | :--------------------------- |
+| Windows  | `PaChat-1.0.0-win-x64.exe`           | NSIS installer (x64 + arm64) |
+| macOS    | `PaChat-1.0.0-mac-arm64.dmg`         | DMG (Intel + Apple Silicon)  |
+| Linux    | `PaChat-1.0.0-linux-x86_64.AppImage` | AppImage + `.deb`            |
+
+Point a packaged client at a remote gateway with the `PACHAT_SERVER_URL`
+environment variable; it defaults to `http://127.0.0.1:4000`.
+
+<br />
