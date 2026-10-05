@@ -130,3 +130,68 @@ The hard parts, concretely:
 | **Protocol drift**          | The client and server disagree after a deploy.                  | One shared package declares every payload. A breaking change **cannot compile on only one side**.                             |
 
 <br />
+
+## ✨ Features
+
+<table>
+<tr>
+<td width="50%" valign="top">
+
+### Messaging
+
+- **Optimistic sends** with idempotent retries and inline failure recovery
+- **Threaded replies** with an inline quote that scrolls to its parent
+- **Edit & delete** with a 24-hour edit window and tombstoned history
+- **Emoji reactions**, aggregated server-side and broadcast as whole state
+- **Message grouping** — consecutive messages collapse into one block
+- **Day separators** and a frozen **"new messages"** divider
+- **Inline markup** — bold, italic, strike, inline & fenced code, quotes, links
+- **@mentions** that resolve to display names and highlight when they're you
+
+</td>
+<td width="50%" valign="top">
+
+### Real time
+
+- **Live presence** — online, away, busy, offline + custom status lines
+- **Typing indicators** with leading-edge broadcast and TTL expiry
+- **Read receipts** surfaced as "who has caught up" in the member list
+- **Unread counts** and **mention badges**, per member and per conversation
+- **Multi-device sync** — every window of an account stays in lockstep
+- **Automatic reconnection** with backoff, jitter and connection-state recovery
+- **Silent token refresh** so the app survives being left open overnight
+
+</td>
+</tr>
+<tr>
+<td width="50%" valign="top">
+
+### Workspace
+
+- **Public & private channels** with owner/admin/member roles
+- **Direct messages**, idempotent at the database level
+- **Full-text search** over message bodies via **SQLite FTS5** with BM25 ranking
+- **Command palette** (`Ctrl/⌘ K`) for navigation, people and message search
+- **Pin** and **mute** per conversation, private to each member
+- **File attachments** up to 25 MiB with inline image previews
+- **Member directory** grouped by presence
+
+</td>
+<td width="50%" valign="top">
+
+### Desktop craft
+
+- **Frameless custom titlebar** with native macOS traffic lights
+- **Native notifications** that focus the right conversation on click
+- **Taskbar / dock badge** reflecting the unread total
+- **OS-encrypted credentials** via `safeStorage` (DPAPI / Keychain / libsecret)
+- **Window geometry** restored, and validated against the current displays
+- **Single-instance** enforcement — a second launch raises the first window
+- **Dark & light themes**, compact density, and full reduced-motion support
+- **Full keyboard control** with a native application menu
+
+</td>
+</tr>
+</table>
+
+<br />
