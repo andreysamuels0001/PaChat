@@ -543,3 +543,35 @@ chat server ends up trivially impersonatable.
 Found something? See [SECURITY.md](SECURITY.md).
 
 <br />
+
+## 📚 Documentation
+
+| Document                                    | Contents                                                         |
+| :------------------------------------------ | :--------------------------------------------------------------- |
+| [**ARCHITECTURE.md**](docs/ARCHITECTURE.md) | Layering, data flow, state ownership, failure handling           |
+| [**DESIGN.md**](docs/DESIGN.md)             | The design system: tokens, type scale, motion, component anatomy |
+| [**API.md**](docs/API.md)                   | REST endpoints and the complete realtime event protocol          |
+| [**ROADMAP.md**](docs/ROADMAP.md)           | What is next and what is deliberately out of scope               |
+| [**CONTRIBUTING.md**](CONTRIBUTING.md)      | Local setup, conventions, PR expectations                        |
+| [**CHANGELOG.md**](CHANGELOG.md)            | Release history                                                  |
+
+<br />
+
+## 🗺 Roadmap
+
+- [x] Real-time messaging with optimistic, idempotent sends
+- [x] Presence, typing indicators and read receipts
+- [x] Channels, direct messages, reactions and threaded replies
+- [x] Full-text search with BM25 ranking
+- [x] File attachments with inline previews
+- [x] Dark & light themes, compact density, reduced motion
+- [x] Native notifications, badge and secure credential storage
+- [ ] Voice notes and inline audio playback
+- [ ] End-to-end encryption for direct messages
+- [ ] Message threads as first-class side panels
+- [ ] Custom emoji and per-workspace branding
+- [ ] Mobile companion client
+
+Full detail and non-goals in [docs/ROADMAP.md](docs/ROADMAP.md).
+
+<br />
