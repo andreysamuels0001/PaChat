@@ -502,3 +502,44 @@ pachat/
 | <kbd>Esc</kbd>                                               | Close the overlay, cancel a reply or an edit            |
 
 <br />
+
+## ⚙️ Configuration
+
+The gateway reads `apps/server/.env` — see
+[`.env.example`](apps/server/.env.example) for the annotated template.
+
+| Variable                  | Default                 | Purpose                                       |
+| :------------------------ | :---------------------- | :-------------------------------------------- |
+| `PORT` · `HOST`           | `4000` · `127.0.0.1`    | Listener address                              |
+| `NODE_ENV`                | `development`           | Switches log format and secret validation     |
+| `CORS_ORIGINS`            | `http://localhost:5173` | Allowed browser origins (comma-separated)     |
+| `JWT_ACCESS_SECRET`       | —                       | **Required.** Access-token signing key        |
+| `JWT_REFRESH_SECRET`      | —                       | **Required.** Refresh-token signing key       |
+| `DATA_DIR` · `UPLOAD_DIR` | `./data`                | Database and attachment storage               |
+| `LOG_LEVEL`               | `info`                  | `trace` · `debug` · `info` · `warn` · `error` |
+| `ALLOW_REGISTRATION`      | `true`                  | Self-service account creation                 |
+| `AUTH_RATE_LIMIT`         | `20`                    | Auth requests per minute per IP               |
+
+A production boot **refuses to start** if the JWT secrets are still the
+placeholders from `.env.example` — the single most common way a self-hosted
+chat server ends up trivially impersonatable.
+
+<br />
+
+## 🔒 Security
+
+| Area          | Measure                                                                                                          |
+| :------------ | :--------------------------------------------------------------------------------------------------------------- |
+| Passwords     | bcrypt, cost 12, plus a decoy hash so a failed login costs the same whether or not the account exists            |
+| Sessions      | Rotating opaque refresh tokens, stored as SHA-256 digests; per-device revocation                                 |
+| Transport     | Protocol-versioned handshake; a stale build is refused rather than allowed to corrupt state                      |
+| Authorisation | One membership gate (`assertMember`) that every conversation handler passes through                              |
+| Attachments   | Opaque storage keys, authenticated downloads, `nosniff`, sanitised filenames never used as paths                 |
+| Abuse         | Per-IP fixed-window limiting on auth; per-member token buckets on sends, reactions and typing                    |
+| Renderer      | Sandboxed, context-isolated, no Node, strict CSP, hand-written IPC allow-list                                    |
+| Credentials   | OS keychain via `safeStorage`; refused rather than downgraded to plaintext when unavailable                      |
+| Search        | Membership subquery is the authorisation boundary — no code path returns a message from a channel you are not in |
+
+Found something? See [SECURITY.md](SECURITY.md).
+
+<br />
