@@ -465,3 +465,40 @@ pachat/
 ```
 
 <br />
+
+## 🛠 Commands
+
+| Command                     | What it does                                                  |
+| :-------------------------- | :------------------------------------------------------------ |
+| `npm run setup`             | Generate secrets, migrate the schema, seed the demo workspace |
+| `npm run dev`               | Gateway + desktop client, both watching                       |
+| `npm run dev:server`        | Gateway only                                                  |
+| `npm run dev:desktop`       | Desktop client only (useful for a second window)              |
+| `npm run build`             | Type-check and build all three packages                       |
+| `npm run typecheck`         | Type-check every workspace                                    |
+| `npm run lint` · `lint:fix` | ESLint 9 flat config across the monorepo                      |
+| `npm run format`            | Prettier across every source file                             |
+| `npm run db:migrate`        | Apply pending migrations                                      |
+| `npm run db:seed`           | Insert the demo workspace (no-op if users exist)              |
+| `npm run db:reset`          | Drop everything, then migrate and seed                        |
+| `npm run package`           | Unpacked desktop build                                        |
+| `npm run dist`              | Platform installers                                           |
+| `npm run clean`             | Remove build output (`-- --deps` also drops `node_modules`)   |
+
+<br />
+
+## ⌨️ Keyboard
+
+| Shortcut                                                     | Action                                                  |
+| :----------------------------------------------------------- | :------------------------------------------------------ |
+| <kbd>Ctrl/⌘</kbd> <kbd>K</kbd>                               | Command palette — conversations, people, message search |
+| <kbd>Ctrl/⌘</kbd> <kbd>Shift</kbd> <kbd>N</kbd>              | New channel                                             |
+| <kbd>Ctrl/⌘</kbd> <kbd>,</kbd>                               | Settings                                                |
+| <kbd>Ctrl/⌘</kbd> <kbd>Shift</kbd> <kbd>M</kbd>              | Toggle the member list                                  |
+| <kbd>Ctrl/⌘</kbd> <kbd>Shift</kbd> <kbd>E</kbd>              | Mark everything read                                    |
+| <kbd>Ctrl/⌘</kbd> <kbd>Alt</kbd> <kbd>↑</kbd> / <kbd>↓</kbd> | Previous / next conversation                            |
+| <kbd>Enter</kbd>                                             | Send (configurable to <kbd>Ctrl</kbd> <kbd>Enter</kbd>) |
+| <kbd>Shift</kbd> <kbd>Enter</kbd>                            | Line break                                              |
+| <kbd>Esc</kbd>                                               | Close the overlay, cancel a reply or an edit            |
+
+<br />
