@@ -575,3 +575,36 @@ Found something? See [SECURITY.md](SECURITY.md).
 Full detail and non-goals in [docs/ROADMAP.md](docs/ROADMAP.md).
 
 <br />
+
+## 🤝 Contributing
+
+Contributions are welcome. Read [CONTRIBUTING.md](CONTRIBUTING.md), then:
+
+```bash
+npm run typecheck && npm run lint && npm run format:check
+```
+
+Every PR should keep those three green.
+
+<br />
+
+## 📄 License
+
+[MIT](LICENSE) © 2026 Andrey Samuels
+
+<br />
+
+---
+
+<div align="center">
+
+<img src="docs/assets/logo.svg" alt="PaChat" width="56" />
+
+**Designed and built by Andrey Samuels**
+
+[![GitHub](https://img.shields.io/badge/GitHub-andreysamuels0001-181717?style=flat-square&logo=github)](https://github.com/andreysamuels0001)
+[![Email](https://img.shields.io/badge/Email-andreysamuels%40outlook.com-6366F1?style=flat-square&logo=maildotru&logoColor=white)](mailto:andreysamuels@outlook.com)
+
+<sub>If PaChat is useful to you, a ⭐ helps others find it.</sub>
+
+</div>
